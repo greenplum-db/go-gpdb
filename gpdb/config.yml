@@ -1,0 +1,19 @@
+---
+CORE:
+  BASE_DIR: /home/gpadmin/                                # Make sure the directory name ends with "/"
+  TEMP_DIR: /temp/                                        # Make sure the directory name ends with "/"
+  APPLICATION_NAME: gpdbinstall                           # Can be anything
+DOWNLOAD:
+  API_TOKEN: c802dd9f43274a0b8a9a3c2ef106fdc1-r           # You can get it after login to PivNet
+  DOWNLOAD_DIR: /download/                                # Make sure the directory name ends with "/"
+INSTALL:
+  ENV_DIR: /env/                                          # Make sure the directory name ends with "/"
+  UNINTSALL_DIR: /uninstall/                              # Make sure the directory name ends with "/"
+  FUTUREREF_DIR: /future_reference/                       # Make sure the directory name ends with "/"
+  MASTER_HOST: gpdb                                       # Hostname of Master
+  MASTER_USER: gpadmin                                    # User that will install GPDB s/w usually "gpadmin"
+  MASTER_PASS: changeme                                   # Password of MASTER_USER user
+  GPMON_PASS: changeme                                    # Password for GPMON
+  MASTER_DATA_DIRECTORY: /data/master/                    # Make sure the directory name ends with "/"
+  SEGMENT_DATA_DIRECTORY: /data/primary/                  # Make sure the directory name ends with "/"
+  TOTAL_SEGMENT: 2                                        # Total Segments to be created
