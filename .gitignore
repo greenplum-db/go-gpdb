@@ -1,48 +1,10 @@
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
-*.o
-*.a
-*.so
-
-# Folders
-_obj
-_test
 
 # Architecture specific extensions/prefixes
-*.[568vq]
-[568vq].out
 
-*.cgo1.go
-*.cgo2.c
-_cgo_defun.c
-_cgo_gotypes.go
-_cgo_export.*
+# Folders
+.vagrant/
 
-_testmain.go
-
-*.exe
-*.test
-*.prof
-
-
-# Ignore these files & folders
-.idea
-.idea/vcs.xml
-learn.go
-output.txt
+# Files
 .DS_Store
-conf
-
-# Ignore Config file
-config.yml
-bin/
-pkg/darwin_amd64/
-
-# Ignore vagrant file
-Vagrant/.vagrant/
-Vagrant/Vagrantfile
-
-# Ignoring the Docker Build Script for now , since
-# Can't seems to change the hostname on Docker build
-# and also don't know why the centos version tells to connect as root for
-# Doing root operation when Im already a root user
-Docker
+UAA.token
