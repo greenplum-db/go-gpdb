@@ -30,7 +30,8 @@ Vagrant.configure(2) do |config|
         end
    end
 
-   config.vm.provision "shell", path: 'scripts/os.prep.sh' 
+   config.vm.provision "shell", path: 'scripts/os.prep.sh'
+   config.vm.provision "shell", inline: 'cd /vagrant && git reset UAA.token' 
    #config.vm.provision "shell", path: 'scripts/go.build.sh', run: "always"
    
 end
