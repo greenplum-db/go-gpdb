@@ -35,6 +35,9 @@ sudo yum -y -q -e 0 install ed unzip tar git strace gdb vim-enhanced wget m4 > /
 log "Changing the permission of /usr/local"
 chmod 777 /usr/local
 
+log "Ignoring Modifications to UAA Token File"
+cd /vagrant && git update-index --assume-unchanged UAA.token
+
 log "OS Setup Complete"
 
 
