@@ -4,7 +4,7 @@ CORE:
   TEMP_DIR: /temp/                                        # Make sure the directory name ends with "/"
   APPLICATION_NAME: gpdbinstall                           # Can be anything
 DOWNLOAD:
-  API_TOKEN: c802dd9f43274a0b8a9a3c2ef106fdc1-r           # You can get it after login to PivNet
+  API_TOKEN: <API TOKEN>           						  # You can get it after login to PivNet
   DOWNLOAD_DIR: /download/                                # Make sure the directory name ends with "/"
 INSTALL:
   ENV_DIR: /env/                                          # Make sure the directory name ends with "/"

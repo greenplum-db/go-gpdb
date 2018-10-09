@@ -4,6 +4,13 @@ log()
 	printf "[`basename $0 .sh`]: %s...\n" "$*" 
 }
 
+function go_version {
+    version=$(go version)
+    regex="([0-9].[0-9].[0-9])"
+    if [[ $version =~ $regex ]]; then 
+         echo ${BASH_REMATCH[1]}
+    fi
+}
 
 # SPINNER for Long Running Processes...
 # Call on last executed with `spinner $!`
