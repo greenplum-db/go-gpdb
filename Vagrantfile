@@ -1,14 +1,11 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-VAGRANT_COMMAND = ARGV[0]
-
-GO_VERSION = "1.7.4"
-OS = "linux"
-ARCH = "amd64"
+#load 'UAA.token'
 
 Vagrant.configure(2) do |config|
 
+    VAGRANT_COMMAND = ARGV[0]
     if VAGRANT_COMMAND == "ssh"
         config.ssh.username = 'gpadmin'
     end
@@ -33,15 +30,7 @@ Vagrant.configure(2) do |config|
         end
    end
 
-   # You can obtain the API key after login to pivotal network website
-   # and on the edit profile section, more information on the repo readme
-   # at https://github.com/ielizaga/piv-go-gpdb
-
-   API_KEY = "c802dd9f43274a0b8a9a3c2ef106fdc1-r"
-
-   # The below line, run the script to setup the script as per the system
-   # requirements to run gpdb.
-
-   config.vm.provision "shell", path: 'scripts/os.prep.sh', args: [GO_VERSION,OS,ARCH]
-
+   config.vm.provision "shell", path: 'scripts/os.prep.sh' 
+   #config.vm.provision "shell", path: 'scripts/go.build.sh', run: "always"
+   
 end

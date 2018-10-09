@@ -1,22 +1,26 @@
 #!/usr/bin/env bash
 #!/bin/bash
 set -e
-source /vagrant/functions.h
+source /vagrant/scripts/functions.h
+
+OS = "linux"
+ARCH = "amd64"
+GO_VERSION = "1.7.4"
 
 abort() { 
   log "FAILED"
   exit 1
 }
 
-log "Testing: Internet Connection" 	
+log "Internet Connection" 	
 if ! wget -q --tries=2 --timeout=5 --spider http://google.com ; then abort; fi
 
-log "Testing: GO Binary" 	
 if ! [ -d "/usr/local/go" ]; then
-
-	log "GO Binary Does Not Exist"
+	
 	log "Downloading GO Binary: $GOVERSION"
-	if ! wget https://storage.googleapis.com/golang/go$GO_VERSION.$OS-$ARCH.tar.gz -O /tmp/go.tar.gz -q; then abort; fi
+	wget https://storage.googleapis.com/golang/go$GO_VERSION.$OS-$ARCH.tar.gz -O /tmp/go.tar.gz -q &
+	spinner $!
+	if $?; then abort; fi
 
 	log "Extracting"
 	tar -C "/usr/local" -xzf /tmp/go.tar.gz
@@ -31,8 +35,9 @@ if ! [ -d "/usr/local/go" ]; then
 	        echo 'export PATH=$PATH:$GOROOT/bin'
 	    } >> "$HOME/.bashrc"
 	fi
+	
+	log "GO Binary Version Installed: " go_version
 else
-	# todo: version checking and updgrade / downgrade	
 	log "GO Binary Version Installed: " go_version
 fi
 

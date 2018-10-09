@@ -1,5 +1,5 @@
 #!/bin/bash
-source /vagrant/functions.h
+source /vagrant/scripts/functions.h
 
 # Modify OS Parameters
 log "Upgrading the semaphore values"
@@ -17,15 +17,12 @@ useradd -m gpadmin --groups wheel
 log "Setting gpadmin password"
 echo "gpadmin:changeme" | chpasswd
 
-log "Configuring ssh"
+log "Configuring SSH"
 cp -pr /home/vagrant/.ssh /home/gpadmin/
 chown -R gpadmin:gpadmin /home/gpadmin
 
 log "Allow passwordless sudo for gpadmin"
 echo "%gpadmin ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/gpadmin
-
-log "Copy the bashrc to gpadmin user folder"
-cp ~/.bashrc /home/gpadmin
 
 # Manage Software
 log "Cleaning RPM cache"
