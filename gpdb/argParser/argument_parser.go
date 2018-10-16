@@ -1,11 +1,11 @@
 package argParser
 
 import (
+	"../core"
 	"flag"
-	"os"
 	"fmt"
+	"os"
 	"strings"
-	"github.com/ielizaga/piv-go-gpdb/core"
 )
 
 // OS Argument Parser
@@ -38,24 +38,24 @@ func ArgParser() {
 
 	// If there is a command keyword provided then check to what is it and then parse the appropriate options
 	switch os.Args[1] {
-	case "download":                                                // Download command parser
+	case "download": // Download command parser
 		core.ArgOption = "download"
 		downloadCmd.Parse(os.Args[2:])
-	case "install":                                                 // Install command parser
+	case "install": // Install command parser
 		core.ArgOption = "install"
 		InstallCmd.Parse(os.Args[2:])
-	case "env":                                                     // Env command parser
+	case "env": // Env command parser
 		core.ArgOption = "env"
 		EnvCmd.Parse(os.Args[2:])
-	case "remove":                                                  // Remove command parser
+	case "remove": // Remove command parser
 		core.ArgOption = "remove"
 		RemoveCmd.Parse(os.Args[2:])
-	case "version":                                                 // Version of the software
+	case "version": // Version of the software
 		fmt.Printf("Version: %.1f\n", core.Version)
 		os.Exit(0)
-	case "help":                                                    // Help Menu
+	case "help": // Help Menu
 		ShowHelp()
-	default:                                                        // Error if command is invalid
+	default: // Error if command is invalid
 		fmt.Printf("ERROR: %q is not valid command.\n", os.Args[1])
 		ShowHelp()
 	}
@@ -93,7 +93,6 @@ func ArgParser() {
 		}
 	}
 
-
 	// Install command argument parser
 	if InstallCmd.Parsed() {
 		if *InstallProductFlag != "" {
@@ -119,7 +118,7 @@ func ArgParser() {
 		}
 
 		// If the request to install is GPCC then check if the cc version is provided
-		if core.RequestedInstallProduct == "gpcc" &&  *InstallCCVersionFlag == "" {
+		if core.RequestedInstallProduct == "gpcc" && *InstallCCVersionFlag == "" {
 			fmt.Println("ERROR: GPCC Version missing, Please provide the version that need to be installed")
 			fmt.Print("Usage of install: \n")
 			InstallCmd.PrintDefaults()

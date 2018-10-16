@@ -1,10 +1,10 @@
 package install
 
 import (
-	"os/exec"
+	"../core"
 	"bytes"
 	"errors"
-	"github.com/ielizaga/piv-go-gpdb/core"
+	"os/exec"
 )
 
 func StopAllDB() error {
@@ -18,11 +18,11 @@ func StopAllDB() error {
 	// simple shell script to execute the stop database command
 	cleanupScript := "ps -ef | grep silent | grep master | while read line; " +
 		"do " +
-		"GPHOME=`echo $line|awk '{print $8}'| rev | cut -d'/' -f3- | rev`;"+
-		"export MASTER_DATA_DIRECTORY=`echo $line|awk '{print $10}'`;"+
-		"export PGPORT=`echo $line|awk '{print $12}'`;"+
-		"export PGDATABASE=template1;"+
-		"source $GPHOME/greenplum_path.sh;"+
+		"GPHOME=`echo $line|awk '{print $8}'| rev | cut -d'/' -f3- | rev`;" +
+		"export MASTER_DATA_DIRECTORY=`echo $line|awk '{print $10}'`;" +
+		"export PGPORT=`echo $line|awk '{print $12}'`;" +
+		"export PGDATABASE=template1;" +
+		"source $GPHOME/greenplum_path.sh;" +
 		"gpstop -af;" +
 		"done"
 
@@ -32,7 +32,9 @@ func StopAllDB() error {
 	StopScript = append(StopScript, cleanupScript)
 	StopScript = append(StopScript, "ps -ef | egrep \"gpmon|gpmonws|lighttpd\" | grep -v grep | awk '{print $2}' | xargs -n1 /bin/kill -11 &>/dev/null; echo > /dev/null")
 	err := ExecuteBash(StopScriptLoc, StopScript)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Send a warning message if the process is not completely stopped.
 	cmdOut, _ := exec.Command("pgrep", "postgres").Output()
@@ -52,7 +54,6 @@ func StopAllDB() error {
 	return nil
 }
 
-
 // Start database
 func StartDB() error {
 
@@ -60,7 +61,7 @@ func StartDB() error {
 
 	// BashScript
 	var BashSricpt []string
-	BashSricpt = append(BashSricpt, "source " + EnvFileName)
+	BashSricpt = append(BashSricpt, "source "+EnvFileName)
 	BashSricpt = append(BashSricpt, "gpstart -a")
 
 	// Create the file
@@ -68,11 +69,15 @@ func StartDB() error {
 
 	// Execute the script
 	err := ExecuteBash(temp_file, BashSricpt)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Check if the database is healthy after start
 	err = IsDBHealthy()
-	if err != nil { return errors.New("Can't seems to start the database in the environment file \"" + EnvFileName + "\"exiting...") }
+	if err != nil {
+		return errors.New("Can't seems to start the database in the environment file \"" + EnvFileName + "\"exiting...")
+	}
 
 	// If WLM is installed on this environment then start it
 	//if !core.IsValueEmpty(WLMInstallDir) {
@@ -94,7 +99,7 @@ func StopDB() error {
 
 	// BashScript
 	var BashSricpt []string
-	BashSricpt = append(BashSricpt, "source " + EnvFileName)
+	BashSricpt = append(BashSricpt, "source "+EnvFileName)
 	BashSricpt = append(BashSricpt, "gpstop -af")
 
 	// Create the file
@@ -102,7 +107,9 @@ func StopDB() error {
 
 	// Execute the script
 	err := ExecuteBash(temp_file, BashSricpt)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// If WLM is installed on this environment then stop it
 	//if !core.IsValueEmpty(WLMInstallDir) {
@@ -131,41 +138,48 @@ func StartDBifNotStarted() error {
 
 		// Stop all database is not stopped
 		err := StopAllDB()
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 
 		// Start the database of concern
 		err = StartDB()
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 
 		// Check again if the database is healthy
 		err = IsDBHealthy()
-		if err != nil { return errors.New("Can't seems to start the database in the environment file \"" + EnvFileName + "\"exiting...") }
+		if err != nil {
+			return errors.New("Can't seems to start the database in the environment file \"" + EnvFileName + "\"exiting...")
+		}
 	}
 
 	return nil
 }
 
 // Started GPCC WebUI
-func StartGPCC (cc_name string, cc_home string) error {
+func StartGPCC(cc_name string, cc_home string) error {
 
 	log.Info("Starting command center WEB UI")
 
 	// Start the command center web UI
 	var gpcmdrStartarg []string
-	gpcmdrStartarg = append(gpcmdrStartarg, "source " + EnvFileName)
-	gpcmdrStartarg = append(gpcmdrStartarg, "source " + cc_home + "/gpcc_path.sh")
-	gpcmdrStartarg = append(gpcmdrStartarg, "gpcmdr --start " + cc_name + " &>/dev/null << EOF")
+	gpcmdrStartarg = append(gpcmdrStartarg, "source "+EnvFileName)
+	gpcmdrStartarg = append(gpcmdrStartarg, "source "+cc_home+"/gpcc_path.sh")
+	gpcmdrStartarg = append(gpcmdrStartarg, "gpcmdr --start "+cc_name+" &>/dev/null << EOF")
 	gpcmdrStartarg = append(gpcmdrStartarg, "y")
 	gpcmdrStartarg = append(gpcmdrStartarg, "EOF")
 
 	// Write it to the file.
 	file := core.TempDir + "gpcmdr_start.sh"
 	err := ExecuteBash(file, gpcmdrStartarg)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
-
 
 // Stop GPCC Instance
 func StopGPCC(cc_name string, cc_home string) error {
@@ -174,14 +188,16 @@ func StopGPCC(cc_name string, cc_home string) error {
 
 	// Start the command center web UI
 	var gpcmdrStartarg []string
-	gpcmdrStartarg = append(gpcmdrStartarg, "source " + EnvFileName)
-	gpcmdrStartarg = append(gpcmdrStartarg, "source " + cc_home + "/gpcc_path.sh")
-	gpcmdrStartarg = append(gpcmdrStartarg, "gpcmdr --stop " + cc_name)
+	gpcmdrStartarg = append(gpcmdrStartarg, "source "+EnvFileName)
+	gpcmdrStartarg = append(gpcmdrStartarg, "source "+cc_home+"/gpcc_path.sh")
+	gpcmdrStartarg = append(gpcmdrStartarg, "gpcmdr --stop "+cc_name)
 
 	// Write it to the file.
 	file := core.TempDir + "gpcmdr_stop.sh"
 	err := ExecuteBash(file, gpcmdrStartarg)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 
@@ -196,12 +212,14 @@ func StartGPCCBrowser() error {
 
 	// Starting the browser for GPCC environment
 	var StartGPCCWeb []string
-	StartGPCCWeb = append(StartGPCCWeb, "LD_LIBRARY_PATH=/usr/lib64 firefox http://127.0.0.1:" + GPCC_PORT)
+	StartGPCCWeb = append(StartGPCCWeb, "LD_LIBRARY_PATH=/usr/lib64 firefox http://127.0.0.1:"+GPCC_PORT)
 
 	// Write it to the file.
 	file := core.TempDir + "start_gpcc_web.sh"
 	err := ExecuteBash(file, StartGPCCWeb)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -212,14 +230,16 @@ func StartWLMService() error {
 
 	// Stopping all the WLM core.
 	var StartWLMArgs []string
-	StartWLMArgs = append(StartWLMArgs, "if [ -f " + WLMInstallDir + "/gp-wlm/bin/svc-mgr.sh ]; then ")
-	StartWLMArgs = append(StartWLMArgs, WLMInstallDir + "/gp-wlm/bin/svc-mgr.sh --service=all --action=cluster-start")
+	StartWLMArgs = append(StartWLMArgs, "if [ -f "+WLMInstallDir+"/gp-wlm/bin/svc-mgr.sh ]; then ")
+	StartWLMArgs = append(StartWLMArgs, WLMInstallDir+"/gp-wlm/bin/svc-mgr.sh --service=all --action=cluster-start")
 	StartWLMArgs = append(StartWLMArgs, "fi")
 
 	// Write it to the file.
 	file := core.TempDir + "start_wlm.sh"
 	err := ExecuteBash(file, StartWLMArgs)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 
@@ -231,14 +251,16 @@ func StopWLMService() error {
 
 	// Stopping all the WLM core.
 	var StopWLMArgs []string
-	StopWLMArgs = append(StopWLMArgs, "if [ -f " + WLMInstallDir + "/gp-wlm/bin/svc-mgr.sh ]; then ")
-	StopWLMArgs = append(StopWLMArgs, WLMInstallDir + "/gp-wlm/bin/svc-mgr.sh --service=all --action=cluster-stop")
+	StopWLMArgs = append(StopWLMArgs, "if [ -f "+WLMInstallDir+"/gp-wlm/bin/svc-mgr.sh ]; then ")
+	StopWLMArgs = append(StopWLMArgs, WLMInstallDir+"/gp-wlm/bin/svc-mgr.sh --service=all --action=cluster-stop")
 	StopWLMArgs = append(StopWLMArgs, "fi")
 
 	// Write it to the file.
 	file := core.TempDir + "stop_wlm.sh"
 	err := ExecuteBash(file, StopWLMArgs)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -258,7 +280,9 @@ func StopAllWLM() error {
 	StopScriptLoc := core.TempDir + "stop_all_wlm.sh"
 	cmdString = append(cmdString, cmdScript)
 	err := ExecuteBash(StopScriptLoc, cmdString)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 

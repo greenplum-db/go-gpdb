@@ -3,11 +3,10 @@
 
 Vagrant.configure(2) do |config|
 
-    VAGRANT_COMMAND = ARGV[0]
-    if VAGRANT_COMMAND == "ssh"
-        config.ssh.username = 'gpadmin'
-    end
-
+    HN  = ENV['HN'] || "go-gpdb"
+    IP  = ENV['IP'] || "192.168.99.100"
+    API  = ENV['API'] || ""
+    
     # You can find all the vagrant boxes at location here
     # https://app.vagrantup.com/bento/
 
@@ -19,12 +18,9 @@ Vagrant.configure(2) do |config|
     # https://github.com/ielizaga/piv-go-gpdb
     # It is needed for command center GUI and for transferring files b/w machines
 
-    _host = ENV['HOST'] || "go-gpdb"
-    _ip = ENV['IP'] || "192.168.99.100"
-
-    config.vm.define _host do |node|
-        node.vm.hostname = _host
-        node.vm.network "private_network", ip: _ip, name: "vboxnet0"
+    config.vm.define HN do |node|
+        node.vm.hostname = HN
+        node.vm.network "private_network", ip: IP, name: "vboxnet0"
 
         node.vm.provision :hosts do |provisioner|
            provisioner.autoconfigure = true
@@ -33,14 +29,28 @@ Vagrant.configure(2) do |config|
          end
          
         node.vm.provider :virtualbox do |vb|
-            vb.name = _host
+            vb.name = HN
             vb.memory = "8196"
         end
    end
-   
-   config.vm.provision :hosts
-   config.vm.provision :shell, path: 'scripts/os.prep.sh'
-   config.vm.provision :shell, inline: "cd /vagrant && git update-index --assume-unchanged UAA.token"
-   #config.vm.provision "shell", path: 'scripts/go.build.sh', run: "always"
-   
+
+# Optional --
+# If the .vagrant/machines/<hostname> folder is empty -- or we request provisioning, then prompt for the API Key
+
+#   if Dir.glob("#{File.dirname(__FILE__)}/.vagrant/machines/#{HN}/*").empty? || ARGV[1] == '--provision'
+#     puts "Enter Your Pivnet UAA Token."
+#     puts "A NULL Entry Will Prompt When Requried."
+#     print "Pivnet API: "
+#     API = STDIN.gets.chomp
+#     print API
+#     print "\n"
+     config.vm.provision :hosts
+     config.vm.provision :shell, path: 'scripts/os.prep.sh', args: [API]
+     config.vm.provision :shell, path: 'scripts/go.build.sh'
+#   end
+
+  if ARGV[0] == "ssh"
+      config.ssh.username = 'gpadmin'
+  end
+
 end

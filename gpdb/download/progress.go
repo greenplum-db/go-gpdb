@@ -1,10 +1,10 @@
 package download
 
 import (
+	"../core"
 	"fmt"
-	"time"
 	"os"
-	"github.com/ielizaga/piv-go-gpdb/core"
+	"time"
 )
 
 // Progress of download

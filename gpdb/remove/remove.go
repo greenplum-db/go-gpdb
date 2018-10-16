@@ -1,10 +1,10 @@
 package remove
 
 import (
-	"strings"
+	"../core"
+	"../install"
 	"github.com/op/go-logging"
-	"github.com/ielizaga/piv-go-gpdb/core"
-	"github.com/ielizaga/piv-go-gpdb/install"
+	"strings"
 )
 
 var (
@@ -18,7 +18,7 @@ func deleteGPDBEnvUsingGpDeleteSystem() error {
 
 	// Script arguments
 	var deleteSystemArgs []string
-	deleteSystemArgs = append(deleteSystemArgs, "source " + install.EnvFileName)
+	deleteSystemArgs = append(deleteSystemArgs, "source "+install.EnvFileName)
 	deleteSystemArgs = append(deleteSystemArgs, "gpdeletesystem -d $MASTER_DATA_DIRECTORY -f << EOF")
 	deleteSystemArgs = append(deleteSystemArgs, "y")
 	deleteSystemArgs = append(deleteSystemArgs, "y")
@@ -27,11 +27,12 @@ func deleteGPDBEnvUsingGpDeleteSystem() error {
 	// Write it to the file.
 	file := core.TempDir + "run_deletesystem.sh"
 	err := install.ExecuteBash(file, deleteSystemArgs)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
-
 
 // Cleaning up all the environments files etc
 func deleteGPDBEnvUsingManualMethod(version string, timestamp string) error {
@@ -40,12 +41,14 @@ func deleteGPDBEnvUsingManualMethod(version string, timestamp string) error {
 
 	// Script arguments
 	var removeAllargs []string
-	removeAllargs = append(removeAllargs, "/bin/sh " + core.UninstallDir + "uninstall_" + version + "_" + timestamp)
+	removeAllargs = append(removeAllargs, "/bin/sh "+core.UninstallDir+"uninstall_"+version+"_"+timestamp)
 
 	// Write it to the file.
 	file := core.TempDir + "run_cleanup_script.sh"
 	err := install.ExecuteBash(file, removeAllargs)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -60,12 +63,14 @@ func Remove(version string) error {
 
 	// Check if the envfile for that version exists
 	chosenEnvFile, err := install.PrevEnvFile("choose")
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// If we receive none, then display the error to user
 	var timestamp string
 	if core.IsValueEmpty(chosenEnvFile) {
-		log.Fatal("Cannot find any environment with the version: " + version )
+		log.Fatal("Cannot find any environment with the version: " + version)
 	} else { // Else store the value
 		install.EnvFileName = core.EnvFileDir + chosenEnvFile
 		timestamp = strings.Split(chosenEnvFile, "_")[2]
@@ -75,16 +80,22 @@ func Remove(version string) error {
 
 	// store the this database port and the GPHOME location
 	err = install.ExtractEnvVariables(install.EnvFileName)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Check if the database is running, if not then start the database
 	err = install.StartDBifNotStarted()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Cleanup GPCC if installed.
 	if !core.IsValueEmpty(install.GPPERFMONHOME) {
 		err = install.UninstallGPCC(timestamp, install.EnvFileName)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 	}
 
 	// run delete command
@@ -92,11 +103,15 @@ func Remove(version string) error {
 	if err != nil {
 		log.Warning("gpdeletesystem failed, running manual cleanup")
 		err = deleteGPDBEnvUsingManualMethod(version, timestamp)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 	} else {
 		log.Info("Deleted GPDB via gpdeletesystem was a success.")
 		err = deleteGPDBEnvUsingManualMethod(version, timestamp)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 	}
 
 	log.Info("Uninstallation of environment \"" + chosenEnvFile + "\" was a success")

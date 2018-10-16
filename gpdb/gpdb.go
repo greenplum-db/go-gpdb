@@ -1,14 +1,14 @@
 package main
 
 import (
+	"./argParser"
+	"./core"
+	"./download"
+	"./env"
+	"./install"
+	"./remove"
 	"github.com/op/go-logging"
 	"os"
-	"github.com/ielizaga/piv-go-gpdb/core"
-	"github.com/ielizaga/piv-go-gpdb/argParser"
-	"github.com/ielizaga/piv-go-gpdb/download"
-	"github.com/ielizaga/piv-go-gpdb/install"
-	"github.com/ielizaga/piv-go-gpdb/env"
-	"github.com/ielizaga/piv-go-gpdb/remove"
 )
 
 // Define the logging format, used in the project

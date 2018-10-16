@@ -1,11 +1,11 @@
 package install
 
 import (
+	"../core"
 	"io/ioutil"
+	"os/exec"
 	"regexp"
 	"strings"
-	"os/exec"
-	"github.com/ielizaga/piv-go-gpdb/core"
 )
 
 // FInd WLM Binaries
@@ -13,11 +13,13 @@ func findWLMBinaries(path string, keyword string, info_text string, warn_text st
 
 	// Listing all the files in the directory
 	output, err := ioutil.ReadDir(path)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	for _, f := range output {
 
 		// Hunting for file that matches the condition
-		re := regexp.MustCompile(``+ keyword +``)
+		re := regexp.MustCompile(`` + keyword + ``)
 		matches := re.FindStringSubmatch(f.Name())
 
 		// Found the file, return the file name
@@ -37,7 +39,6 @@ func findWLMBinaries(path string, keyword string, info_text string, warn_text st
 	return "", nil
 }
 
-
 // Install WLM Binaries
 func Installwlm(t string) error {
 
@@ -48,8 +49,10 @@ func Installwlm(t string) error {
 	WLMBinaryFile, err := findWLMBinaries(GPPERFMONHOME,
 		"gp-wlm.*.bin",
 		"Found the WLM Binary file: ",
-		"Cannot find the WLM Binaries on the directory \"" + GPPERFMONHOME + "\", skipping the WLM Installation")
-	if err != nil { return err }
+		"Cannot find the WLM Binaries on the directory \""+GPPERFMONHOME+"\", skipping the WLM Installation")
+	if err != nil {
+		return err
+	}
 
 	// Version and Directory
 	WLMVersion := strings.Replace(WLMBinaryFile, ".bin", "", 1)
@@ -61,33 +64,39 @@ func Installwlm(t string) error {
 	}
 
 	// Check if the binary we are installing is already installed on this server
-	HasThisWLMAlreadyInstalled, err := findWLMBinaries( core.EnvYAML.Install.MasterDataDirectory + "wlm/",
+	HasThisWLMAlreadyInstalled, err := findWLMBinaries(core.EnvYAML.Install.MasterDataDirectory+"wlm/",
 		WLMVersion,
 		"Found the WLM Version already installed: ",
-		"Cannot find any previous installation of WLM version \""+ WLMVersion +"\" installed on this server")
+		"Cannot find any previous installation of WLM version \""+WLMVersion+"\" installed on this server")
 
 	// Yes found a previous installation, so lets uninstall and reinstall it (in case if its corrupted).
 	if !core.IsValueEmpty(HasThisWLMAlreadyInstalled) {
 		err := UninstallWLM(t, WLMDir)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 	}
 
 	// Installing the workload manager.
 	log.Info("Creating script to install the workload manager")
 	var InstallWLMArg []string
-	InstallWLMArg = append(InstallWLMArg, "source " + EnvFileName)
-	InstallWLMArg = append(InstallWLMArg, "chmod +x " + GPPERFMONHOME + "/" + WLMBinaryFile)
-	InstallWLMArg = append(InstallWLMArg, "mkdir -p " + WLMDir)
-	InstallWLMArg = append(InstallWLMArg, GPPERFMONHOME + "/" + WLMBinaryFile + " --install=" + WLMDir)
+	InstallWLMArg = append(InstallWLMArg, "source "+EnvFileName)
+	InstallWLMArg = append(InstallWLMArg, "chmod +x "+GPPERFMONHOME+"/"+WLMBinaryFile)
+	InstallWLMArg = append(InstallWLMArg, "mkdir -p "+WLMDir)
+	InstallWLMArg = append(InstallWLMArg, GPPERFMONHOME+"/"+WLMBinaryFile+" --install="+WLMDir)
 
 	// Write it to the file and execute.
 	file := core.TempDir + "install_wlm.sh"
 	err = ExecuteBash(file, InstallWLMArg)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Update the environment file
 	err = UpdateWlmEnvFile(WLMDir, WLMVersion)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	log.Info("Installation of WLM manager is complete")
 
@@ -101,24 +110,27 @@ func UninstallWLM(t string, WLMDir string) error {
 
 	// Stop all WLM services
 	err := StopWLMService()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Uninstall Arguments
 	var UninstallWLMArgs []string
-	UninstallWLMArgs = append(UninstallWLMArgs, "source " + EnvFileName)
-	UninstallWLMArgs = append(UninstallWLMArgs, WLMDir + "/gp-wlm/bin/uninstall --symlink " + WLMInstallDir + "/gp-wlm")
-	UninstallWLMArgs = append(UninstallWLMArgs, "cp " + EnvFileName + " " + EnvFileName + "." + t)
-	UninstallWLMArgs = append(UninstallWLMArgs, "egrep -v \"wlm|WLM\" " + EnvFileName + "." + t + " > " + EnvFileName)
-	UninstallWLMArgs = append(UninstallWLMArgs, "rm " + EnvFileName + "." + t)
+	UninstallWLMArgs = append(UninstallWLMArgs, "source "+EnvFileName)
+	UninstallWLMArgs = append(UninstallWLMArgs, WLMDir+"/gp-wlm/bin/uninstall --symlink "+WLMInstallDir+"/gp-wlm")
+	UninstallWLMArgs = append(UninstallWLMArgs, "cp "+EnvFileName+" "+EnvFileName+"."+t)
+	UninstallWLMArgs = append(UninstallWLMArgs, "egrep -v \"wlm|WLM\" "+EnvFileName+"."+t+" > "+EnvFileName)
+	UninstallWLMArgs = append(UninstallWLMArgs, "rm "+EnvFileName+"."+t)
 
 	// Write it to the file.
 	file := core.TempDir + "uninstall_wlm.sh"
 	err = ExecuteBash(file, UninstallWLMArgs)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
-
 
 // Get WLM version
 func GetWLMVersion(path string) (string, error) {
@@ -126,8 +138,10 @@ func GetWLMVersion(path string) (string, error) {
 	log.Info("Obtaining the version of the WLM installed")
 
 	// extract the version of the WLM
-	wlmv, err := exec.Command(path+"/gp-wlm/bin/gp-wlm -v").Output()
-	if err != nil { return "", err }
+	wlmv, err := exec.Command(path + "/gp-wlm/bin/gp-wlm -v").Output()
+	if err != nil {
+		return "", err
+	}
 
 	return string(wlmv), nil
 }

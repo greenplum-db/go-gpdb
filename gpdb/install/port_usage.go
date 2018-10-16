@@ -1,11 +1,11 @@
 package install
 
 import (
-	"strconv"
+	"../core"
 	"net"
 	"os/exec"
+	"strconv"
 	"strings"
-	"github.com/ielizaga/piv-go-gpdb/core"
 )
 
 // Check if the port is used, if yes then what is the next sequence program can use
@@ -15,28 +15,32 @@ func IsPortUsed(port int, iteration int) (int, error) {
 	BASE := port
 
 	// Iterate through iteration to find how many port do we need
-	for i:=1; i<=iteration; i++ {
+	for i := 1; i <= iteration; i++ {
 
 		// Error out if the ports are not in the format needed
 		_, err := strconv.ParseUint(strconv.Itoa(port), 10, 16)
-		if err != nil { return 0, err }
+		if err != nil {
+			return 0, err
+		}
 
 		// Check if the port is available, if not find the next sequence
-		ln, err := net.Listen("tcp", ":" + strconv.Itoa(port))
+		ln, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 		if err != nil {
-			log.Warning("PORT \"" + strconv.Itoa(port) + "\" is unavailable, finding the next sequence" )
-			BASE =  BASE + iteration
+			log.Warning("PORT \"" + strconv.Itoa(port) + "\" is unavailable, finding the next sequence")
+			BASE = BASE + iteration
 			return IsPortUsed(BASE, iteration)
 		}
 
 		// Close listening to the port
 		err = ln.Close()
 		if err != nil {
-			if err != nil { return 0, err }
+			if err != nil {
+				return 0, err
+			}
 		}
 
 		// Iterate
-		port =  port + i
+		port = port + i
 	}
 
 	// Return the collected information
@@ -49,7 +53,9 @@ func DoWeHavePortBase(file string, name string, which_port string) (string, erro
 
 	portBaseFile := file + name
 	return_code, err := core.DoesFileOrDirExists(portBaseFile)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	if return_code {
 		log.Info("Found port file: \"" + portBaseFile + "\"")
 		cmdOut, _ := exec.Command("grep", which_port, portBaseFile).Output()
@@ -65,7 +71,6 @@ func DoWeHavePortBase(file string, name string, which_port string) (string, erro
 	return "", nil
 }
 
-
 // Store the last used port
 func StoreLastUsedPort() error {
 
@@ -76,16 +81,20 @@ func StoreLastUsedPort() error {
 	// Delete the file if already exists
 	_ = core.DeleteFile(FurtureRefFile)
 	err := core.CreateFile(FurtureRefFile)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	// Contents to write to the file
 	var FutureContents []string
-	FutureContents = append(FutureContents, "PORT_BASE: " + strconv.Itoa(GpInitSystemConfig.PortBase + core.EnvYAML.Install.TotalSegments))
-	FutureContents = append(FutureContents, "MASTER_PORT: " + strconv.Itoa(GpInitSystemConfig.MasterPort + 1))
+	FutureContents = append(FutureContents, "PORT_BASE: "+strconv.Itoa(GpInitSystemConfig.PortBase+core.EnvYAML.Install.TotalSegments))
+	FutureContents = append(FutureContents, "MASTER_PORT: "+strconv.Itoa(GpInitSystemConfig.MasterPort+1))
 
 	// Write to the file
 	err = core.WriteFile(FurtureRefFile, FutureContents)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

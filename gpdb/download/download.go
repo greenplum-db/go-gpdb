@@ -1,12 +1,12 @@
 package download
 
 import (
-	"fmt"
+	"../core"
 	"encoding/json"
 	"errors"
-	"strings"
+	"fmt"
 	"github.com/op/go-logging"
-	"github.com/ielizaga/piv-go-gpdb/core"
+	"strings"
 )
 
 var (
@@ -20,7 +20,9 @@ func extract_product() (ProductObjects, error) {
 
 	// Get the API from the Pivotal Products URL
 	ProductApiResponse, err := GetApi("GET", Products, false, "", 0)
-	if err != nil {return ProductObjects{}, err}
+	if err != nil {
+		return ProductObjects{}, err
+	}
 
 	// Store all the JSON on the Product struct
 	json.Unmarshal(ProductApiResponse, &ProductJsonType)
@@ -28,7 +30,6 @@ func extract_product() (ProductObjects, error) {
 	// Return the struct
 	return ProductJsonType, nil
 }
-
 
 // Extract all the Releases of the product with slug : pivotal-gpdb
 func extract_release(productJson ProductObjects) (ReleaseObjects, error) {
@@ -48,7 +49,9 @@ func extract_release(productJson ProductObjects) (ReleaseObjects, error) {
 
 		// Extract all the releases
 		ReleaseApiResponse, err := GetApi("GET", ReleaseURL, false, "", 0)
-		if err != nil {return ReleaseObjects{}, err}
+		if err != nil {
+			return ReleaseObjects{}, err
+		}
 
 		// Store all the releases on the release struct
 		json.Unmarshal(ReleaseApiResponse, &ReleaseJsonType)
@@ -76,7 +79,7 @@ func show_available_version(ReleaseJson ReleaseObjects) (string, string, error) 
 
 	// Check if the user provided version is on the list we have just extracted
 	if core.Contains(ReleaseVersion, core.RequestedDownloadVersion) {
-		log.Info("Found the GPDB version \""+ core.RequestedDownloadVersion +"\" on PivNet, continuing..")
+		log.Info("Found the GPDB version \"" + core.RequestedDownloadVersion + "\" on PivNet, continuing..")
 		version_selected = ReleaseOutputMap[core.RequestedDownloadVersion]
 		release = core.RequestedDownloadVersion
 
@@ -84,7 +87,7 @@ func show_available_version(ReleaseJson ReleaseObjects) (string, string, error) 
 
 		// Print warning if the user did provide a value of the version
 		if core.RequestedDownloadVersion != "" {
-			log.Warning("Unable to find the GPDB version \""+ core.RequestedDownloadVersion +"\" on PivNet, failing back to interactive mode..\n")
+			log.Warning("Unable to find the GPDB version \"" + core.RequestedDownloadVersion + "\" on PivNet, failing back to interactive mode..\n")
 		} else { // print a blank line
 			fmt.Println()
 		}
@@ -109,7 +112,7 @@ func show_available_version(ReleaseJson ReleaseObjects) (string, string, error) 
 }
 
 // From the user choice extract all the files available on that version
-func extract_downloadURL(ver string, url string) (VersionObjects, error){
+func extract_downloadURL(ver string, url string) (VersionObjects, error) {
 
 	log.Info("Obtaining the files under the greenplum version: " + ver)
 
@@ -138,8 +141,8 @@ func which_product(versionJson VersionObjects, VerToDownload string) error {
 	// Not sure why from 5.0 beta version, all the files are listed inside Product file
 	// Since the list is not a correct and its not what all the other product
 	// follows , will ask the user to choose from it
-	if len(versionJson.Product_files) >= 2 && ( strings.Contains(VerToDownload, "beta") || strings.Contains(VerToDownload, "alpha") ){
-		for _,k := range versionJson.Product_files {
+	if len(versionJson.Product_files) >= 2 && (strings.Contains(VerToDownload, "beta") || strings.Contains(VerToDownload, "alpha")) {
+		for _, k := range versionJson.Product_files {
 			ProductOutputMap[k.Name] = k.Links.Self.Href
 			ProductOptions = append(ProductOptions, k.Name)
 		}
@@ -199,13 +202,15 @@ func which_product(versionJson VersionObjects, VerToDownload string) error {
 }
 
 // extract the filename and the size of the product that the user has choosen
-func extract_filename_and_size (url string) error {
+func extract_filename_and_size(url string) error {
 
 	log.Info("Extracting the filename and the size of the product file.")
 
 	// Obtain the JSON response of the product file API
-	ProductFileApiResponse, err := GetApi("GET", url, false , "" , 0)
-	if err != nil {return err}
+	ProductFileApiResponse, err := GetApi("GET", url, false, "", 0)
+	if err != nil {
+		return err
+	}
 
 	// Store it on JSON
 	json.Unmarshal(ProductFileApiResponse, &ProductFileJsonType)
@@ -224,30 +229,44 @@ func Download() error {
 	// Authentication validations
 	log.Info("Checking if the user is a valid user")
 	_, err := GetApi("GET", Authentication, false, "", 0)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	// Product list
 	productJson, err := extract_product()
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	// Release list
 	releaseJson, err := extract_release(productJson)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	// What is user's choice
 	choice, choice_url, err := show_available_version(releaseJson)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	// Set the of Install if the user has asked to install after download and not version information is available
-	if core.InstallAfterDownload { core.RequestedInstallVersion = choice }
+	if core.InstallAfterDownload {
+		core.RequestedInstallVersion = choice
+	}
 
 	// Get all the files under that version
 	versionFileJson, err := extract_downloadURL(choice, choice_url)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	// The users choice to what to download from that version
 	err = which_product(versionFileJson, choice)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	// If we didn't find the database File, then fall back to interactive mode.
 	if (core.RequestedDownloadProduct == "gpdb" || core.RequestedDownloadProduct == "gpcc") && ProductFileURL == "" {
@@ -258,18 +277,24 @@ func Download() error {
 
 	// Extract the filename and the size of the file
 	err = extract_filename_and_size(ProductFileURL)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	// Accept the EULA
 	log.Info("Accepting the EULA (End User License Agreement): " + EULA)
 	_, err = GetApi("POST", EULA, false, "", 0)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	// Download the version
 	log.Info("Starting downloading of file: " + ProductFileName)
 	if DownloadURL != "" {
 		_, err := GetApi("GET", DownloadURL, true, ProductFileName, ProductFileSize)
-		if err != nil {return err}
+		if err != nil {
+			return err
+		}
 	} else {
 		return errors.New("Download URL is blank, cannot download the product.")
 	}

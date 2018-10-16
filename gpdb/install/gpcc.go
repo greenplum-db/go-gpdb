@@ -1,14 +1,12 @@
 package install
 
-
 import (
-	"os/exec"
+	"../core"
 	"errors"
+	"os/exec"
 	"strconv"
 	"strings"
-	"github.com/ielizaga/piv-go-gpdb/core"
 )
-
 
 // Installed GPPERFMON software to the database
 func InstallGpperfmon() error {
@@ -23,15 +21,18 @@ func InstallGpperfmon() error {
 
 	// Installation script
 	var install_script []string
-	install_script = append(install_script, "source " + EnvFileName)
-	install_script = append(install_script, "gpperfmon_install --enable --password "+ core.EnvYAML.Install.GpMonPass +" --port $PGPORT")
+	install_script = append(install_script, "source "+EnvFileName)
+	install_script = append(install_script, "gpperfmon_install --enable --password "+core.EnvYAML.Install.GpMonPass+" --port $PGPORT")
 	install_script = append(install_script, "echo \"host      all     gpmon    0.0.0.0/0    md5\" >> $MASTER_DATA_DIRECTORY/pg_hba.conf")
 	install_script = append(install_script, "echo \"host     all         gpmon         ::1/128       md5\" >> $MASTER_DATA_DIRECTORY/pg_hba.conf")
 
 	// Execute the script
 	temp_file := core.TempDir + "install_gpperfmon.sh"
 	err := ExecuteBash(temp_file, install_script)
-	if err != nil { return err } else {}
+	if err != nil {
+		return err
+	} else {
+	}
 
 	return nil
 }
@@ -41,7 +42,7 @@ func WasGPCCInstallationSucess() error {
 
 	// Is gpmmon running
 	log.Info("Checking if GPMMON process is running")
-	_ , err := exec.Command("pgrep", "gpmmon").Output()
+	_, err := exec.Command("pgrep", "gpmmon").Output()
 	if err != nil {
 		return errors.New("GPMMON process is not running")
 	} else {
@@ -51,7 +52,7 @@ func WasGPCCInstallationSucess() error {
 	// Can we access gpperfmon database
 	log.Info("Checking if GPPERFMON database can be accessed")
 	query_string := "select * from system_now"
-	_, err = execute_db_query(query_string, "gpperfmon",false, "")
+	_, err = execute_db_query(query_string, "gpperfmon", false, "")
 	if err != nil {
 		return errors.New("Cannot read the gpperfmon database, installation of gpperfmon database failed..")
 	} else {
@@ -69,8 +70,8 @@ func InstallGPCCUI(args []string, cc_home string) error {
 	log.Info("Installing command center WEB UI")
 	// Check if the version of command center is of 1.x, since that version didn't have WLM.
 	var gpcmdrArgs []string
-	gpcmdrArgs = append(gpcmdrArgs, "source " + EnvFileName)
-	gpcmdrArgs = append(gpcmdrArgs, "source " + cc_home + "/gpcc_path.sh")
+	gpcmdrArgs = append(gpcmdrArgs, "source "+EnvFileName)
+	gpcmdrArgs = append(gpcmdrArgs, "source "+cc_home+"/gpcc_path.sh")
 	gpcmdrArgs = append(gpcmdrArgs, "echo")
 	gpcmdrArgs = append(gpcmdrArgs, "gpcmdr --setup << EOF")
 	for _, arg := range args {
@@ -81,7 +82,9 @@ func InstallGPCCUI(args []string, cc_home string) error {
 	// Write it to the file and execute
 	file := core.TempDir + "gpcmdr_setup.sh"
 	err := ExecuteBash(file, gpcmdrArgs)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -130,17 +133,21 @@ func StoreLastUsedGPCCPort() error {
 	// Delete the file if already exists
 	_ = core.DeleteFile(FurtureRefFile)
 	err := core.CreateFile(FurtureRefFile)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	// Contents to write to the file
 	var FutureContents []string
 	port, _ := strconv.Atoi(GPCC_PORT)
 	port = port + 3
-	FutureContents = append(FutureContents, "GPCC_PORT: " + strconv.Itoa(port))
+	FutureContents = append(FutureContents, "GPCC_PORT: "+strconv.Itoa(port))
 
 	// Write to the file
 	err = core.WriteFile(FurtureRefFile, FutureContents)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -152,25 +159,27 @@ func UninstallGPCC(t string, env_file string) error {
 
 	// Generate the script
 	var uninstallGPCCArgs []string
-	uninstallGPCCArgs = append(uninstallGPCCArgs, "source " + env_file)
-	uninstallGPCCArgs = append(uninstallGPCCArgs, "source " + GPPERFMONHOME + "/gpcc_path.sh")
-	uninstallGPCCArgs = append(uninstallGPCCArgs, "gpcmdr --stop " + GPCC_INSTANCE_NAME + " &>/dev/null" )
-	uninstallGPCCArgs = append(uninstallGPCCArgs, "rm -rf " + GPPERFMONHOME + "/instances/" + GPCC_INSTANCE_NAME)
+	uninstallGPCCArgs = append(uninstallGPCCArgs, "source "+env_file)
+	uninstallGPCCArgs = append(uninstallGPCCArgs, "source "+GPPERFMONHOME+"/gpcc_path.sh")
+	uninstallGPCCArgs = append(uninstallGPCCArgs, "gpcmdr --stop "+GPCC_INSTANCE_NAME+" &>/dev/null")
+	uninstallGPCCArgs = append(uninstallGPCCArgs, "rm -rf "+GPPERFMONHOME+"/instances/"+GPCC_INSTANCE_NAME)
 	uninstallGPCCArgs = append(uninstallGPCCArgs, "gpconfig -c gp_enable_gpperfmon -v off &>/dev/null")
-	uninstallGPCCArgs = append(uninstallGPCCArgs, "cp $MASTER_DATA_DIRECTORY/pg_hba.conf $MASTER_DATA_DIRECTORY/pg_hba.conf." + t)
-	uninstallGPCCArgs = append(uninstallGPCCArgs, "grep -v gpmon $MASTER_DATA_DIRECTORY/pg_hba.conf."+ t +" > $MASTER_DATA_DIRECTORY/pg_hba.conf")
-	uninstallGPCCArgs = append(uninstallGPCCArgs, "rm -rf $MASTER_DATA_DIRECTORY/pg_hba.conf."+ t )
+	uninstallGPCCArgs = append(uninstallGPCCArgs, "cp $MASTER_DATA_DIRECTORY/pg_hba.conf $MASTER_DATA_DIRECTORY/pg_hba.conf."+t)
+	uninstallGPCCArgs = append(uninstallGPCCArgs, "grep -v gpmon $MASTER_DATA_DIRECTORY/pg_hba.conf."+t+" > $MASTER_DATA_DIRECTORY/pg_hba.conf")
+	uninstallGPCCArgs = append(uninstallGPCCArgs, "rm -rf $MASTER_DATA_DIRECTORY/pg_hba.conf."+t)
 	uninstallGPCCArgs = append(uninstallGPCCArgs, "psql -d template1 -p $PGPORT -Atc \"drop database gpperfmon\" &>/dev/null")
 	uninstallGPCCArgs = append(uninstallGPCCArgs, "psql -d template1 -p $PGPORT -Atc \"drop role gpmon\" &>/dev/null")
 	uninstallGPCCArgs = append(uninstallGPCCArgs, "rm -rf $MASTER_DATA_DIRECTORY/gpperfmon/*")
-	uninstallGPCCArgs = append(uninstallGPCCArgs, "cp "+ env_file +" "+ env_file + "." + t )
-	uninstallGPCCArgs = append(uninstallGPCCArgs, "egrep -v \"GPPERFMONHOME|GPCC_INSTANCE_NAME|GPCCPORT\" " + env_file + "." + t + " > " + env_file)
-	uninstallGPCCArgs = append(uninstallGPCCArgs, "rm -rf "+ env_file + "." + t)
+	uninstallGPCCArgs = append(uninstallGPCCArgs, "cp "+env_file+" "+env_file+"."+t)
+	uninstallGPCCArgs = append(uninstallGPCCArgs, "egrep -v \"GPPERFMONHOME|GPCC_INSTANCE_NAME|GPCCPORT\" "+env_file+"."+t+" > "+env_file)
+	uninstallGPCCArgs = append(uninstallGPCCArgs, "rm -rf "+env_file+"."+t)
 
 	// Write it to the file.
 	file := core.TempDir + "uninstall_gpcc.sh"
 	err := ExecuteBash(file, uninstallGPCCArgs)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

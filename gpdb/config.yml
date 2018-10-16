@@ -1,11 +1,11 @@
 # Make sure the directory names ends with "/"
 ---
 CORE:
+  APPLICATION_NAME: gpdbinstall                           # Application Folder Name
   OS: "linux"                                             # OS Platform
   ARCH: "amd64"                                           # OS Architecture 
   GO_BUILD: "1.7.4"                                       # Version of GO the Application will use to Build (1.7.4)
-  BASE_DIR: /usr/local/src                                # Location Where [APPLICATION_NAME] Files Will Be Created
-  APPLICATION_NAME: gpdbinstall                           # Application Folder Name
+  BASE_DIR: /usr/local/src/go                             # Location Where [APPLICATION_NAME] Files Will Be Created
   TEMP_DIR: /temp/                                        # Temporary Folder Inside [APPLICATION_NAME] for Hostfile and Init
 DOWNLOAD:
   API_TOKEN: <API TOKEN>           						  # You can get it after login to PivNet

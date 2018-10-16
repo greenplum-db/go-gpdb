@@ -1,10 +1,10 @@
 package install
 
 import (
-	"os/exec"
+	"../core"
 	"os"
+	"os/exec"
 	"strconv"
-	"github.com/ielizaga/piv-go-gpdb/core"
 )
 
 // Execute DB Query
@@ -12,25 +12,33 @@ func execute_db_query(query_string string, db_name string, to_write bool, file_n
 
 	// Set GPDB Environment
 	err := SourceGPDBPath()
-	if err != nil { return []byte(""), err}
+	if err != nil {
+		return []byte(""), err
+	}
 
 	// Execute command
 	master_port := strconv.Itoa(ThisDBMasterPort)
-	cmd := exec.Command("psql", "-p", master_port , "-d", db_name, "-Atc", query_string)
+	cmd := exec.Command("psql", "-p", master_port, "-d", db_name, "-Atc", query_string)
 
 	// If request to file, then write to o/p file
 	if to_write {
 		outfile, err := os.Create(file_name)
-		if err != nil { return []byte(""), err }
+		if err != nil {
+			return []byte(""), err
+		}
 		defer outfile.Close()
 		cmd.Stdout = outfile
 	}
 
 	// Start the execution of command.
 	err = cmd.Start()
-	if err != nil { return []byte(""), err }
+	if err != nil {
+		return []byte(""), err
+	}
 	err = cmd.Wait()
-	if err != nil { return []byte(""), err }
+	if err != nil {
+		return []byte(""), err
+	}
 
 	return []byte(""), nil
 }
@@ -43,8 +51,10 @@ func IsDBHealthy() error {
 	query_string := "select 1"
 
 	// Execute string
-	_, err := execute_db_query(query_string, "template1",false, "")
-	if err != nil { return err }
+	_, err := execute_db_query(query_string, "template1", false, "")
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -64,16 +74,20 @@ func CreateUnistallScript(t string) error {
 
 	// Execute the query
 	_, err := execute_db_query(query_string, "template1", true, UninstallFileDir)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// add commands to remove the environment file & uninstall script once done.
 	var uninstallAddons []string
-	uninstallAddons = append(uninstallAddons, "rm -rf " + core.EnvFileDir + "env_" + core.RequestedInstallVersion + "_" + t)
-	uninstallAddons = append(uninstallAddons, "rm -rf " + UninstallFileDir)
+	uninstallAddons = append(uninstallAddons, "rm -rf "+core.EnvFileDir+"env_"+core.RequestedInstallVersion+"_"+t)
+	uninstallAddons = append(uninstallAddons, "rm -rf "+UninstallFileDir)
 
 	// append to the file.
 	err = core.AppendFile(UninstallFileDir, uninstallAddons)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -1,24 +1,25 @@
 package install
 
 import (
+	"../core"
+	"archive/zip"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
-	"io"
 	"regexp"
-	"errors"
-	"archive/zip"
 	"strings"
-	"github.com/ielizaga/piv-go-gpdb/core"
 )
 
 // Provides all the files in the directory
 func ListFilesInDir(dest string) ([]string, error) {
 	log.Info("Listing all the files in the download directory: " + dest)
 	files, err := filepath.Glob(dest + "*")
-	if err != nil { return files, err }
+	if err != nil {
+		return files, err
+	}
 	return files, nil
 }
-
 
 // Find the file that matches the search string
 func GetBinaryOfMatchingVersion(files []string, version string) (string, error) {
@@ -34,7 +35,7 @@ func GetBinaryOfMatchingVersion(files []string, version string) (string, error) 
 			return f, nil
 		}
 	}
-	return "", errors.New("Unable to find any file that matches the version: " + version )
+	return "", errors.New("Unable to find any file that matches the version: " + version)
 }
 
 // Unzip the provided file.
@@ -107,11 +108,15 @@ func UnzipBinary(version string) (string, error) {
 
 	// List all the files in the download directory
 	all_files, err := ListFilesInDir(core.DownloadDir)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 
 	// Check if any of the file matches to requested version to install
 	binary_file, err := GetBinaryOfMatchingVersion(all_files, version)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 
 	// If we cannot find a match then error out
 	if core.IsValueEmpty(binary_file) {
