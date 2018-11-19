@@ -11,12 +11,6 @@ const (
 // Slug ID that is of our importance
 const ProductName = "pivotal-gpdb"
 
-// Common Downloading options
-const (
-	DBServer = "Database Server"
-	GPCC = "Greenplum Command Center"
-)
-
 // Products
 var ProductJsonType ProductObjects
 
@@ -38,19 +32,15 @@ var DownloadURL string
 var ProductFileURL string
 var ChoiceMap VersionObjects
 
-// Product file
+// Product File
 var ProductFileJsonType ProductFilesObjects
 var ProductFileName string
 var ProductFileSize int64
 var EULA string
 var ProductOutputMap = make(map[string]string)
 var ProductOptions []string
-var FileNameContains = []string{
-	"Red Hat Enterprise Linux",
-	"RedHat Entrerprise Linux",
-	"RedHat Enterprise Linux",
-	"REDHAT ENTERPRISE LINUX",
-	"RHEL",
-	"Binary Installer for RHEL"}
 
-var IgnoreFileExtension = "RPM for RHEL"
+// Product File Expressions
+var rx_gpcc = `Greenplum Command Center`
+var rx_gpdb = `Greenplum Database (\d+\.)(\d+\.)(\d+)?(\.\d)?( Binary Installer)? ` +
+              `for ((Red Hat Enterprise|RedHat Enterprise) Linux|RHEL).*7`

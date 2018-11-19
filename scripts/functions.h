@@ -1,4 +1,4 @@
-# Frequent Use Variables:
+# Constants (well, sorta..)
 SCRIPT="$0"
 PASS="[√]"
 FAIL="[X]"
@@ -61,9 +61,10 @@ function log() {
   printf "%s...\n" "$*" 
 }
 
-
-# Call spinner on unknown execution length with `spinner $!`
+# Usage `spinner pid display_text`
+# Call spinner last background execution with `spinner $!`
 # Include script name with `basename $0 .sh`
+# Will return the exit status of the watched process. 
 function spinner() { 
     local pid=$1
     local delay=0.5

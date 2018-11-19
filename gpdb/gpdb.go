@@ -14,9 +14,7 @@ import (
 // Define the logging format, used in the project
 var (
 	log    = logging.MustGetLogger("gpdb")
-	format = logging.MustStringFormatter(
-		`%{color}%{time:2006-01-02 15:04:05.000}:%{level:s} > %{color:reset}%{message}`,
-	)
+	format = logging.MustStringFormatter(`%{color}%{time:2006-01-02 15:04:05.000}:%{level:s} > %{color:reset}%{message}`)
 )
 
 func main() {

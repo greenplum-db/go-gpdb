@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/op/go-logging"
+	"regexp"
 	"strings"
 )
 
@@ -87,7 +88,8 @@ func show_available_version(ReleaseJson ReleaseObjects) (string, string, error) 
 
 		// Print warning if the user did provide a value of the version
 		if core.RequestedDownloadVersion != "" {
-			log.Warning("Unable to find the GPDB version \"" + core.RequestedDownloadVersion + "\" on PivNet, failing back to interactive mode..\n")
+			log.Warning("Unable to find the GPDB version \"" + core.RequestedDownloadVersion + "\" on PivNet, " +
+				"failing back to interactive mode..\n")
 		} else { // print a blank line
 			fmt.Println()
 		}
@@ -115,6 +117,7 @@ func show_available_version(ReleaseJson ReleaseObjects) (string, string, error) 
 func extract_downloadURL(ver string, url string) (VersionObjects, error) {
 
 	log.Info("Obtaining the files under the greenplum version: " + ver)
+	log.Debugf(url)
 
 	// Extract all the files from the API
 	VersionApiResponse, err := GetApi("GET", url, false, "", 0)
@@ -138,52 +141,45 @@ func which_product(versionJson VersionObjects, VerToDownload string) error {
 	ProductOutputMap = make(map[string]string)
 	ProductOptions = []string{}
 
-	// Not sure why from 5.0 beta version, all the files are listed inside Product file
-	// Since the list is not a correct and its not what all the other product
-	// follows , will ask the user to choose from it
-	if len(versionJson.Product_files) >= 2 && (strings.Contains(VerToDownload, "beta") || strings.Contains(VerToDownload, "alpha")) {
-		for _, k := range versionJson.Product_files {
-			ProductOutputMap[k.Name] = k.Links.Self.Href
-			ProductOptions = append(ProductOptions, k.Name)
+	// This is the correct API, all the files are inside the file group MAP
+	for _, k := range versionJson.File_groups {
+
+		// GPDB Options
+		if core.RequestedDownloadProduct == "gpdb" {
+
+			rx, _ := regexp.Compile(rx_gpdb)
+
+			for _, j := range k.Product_files {
+				if rx.MatchString(j.Name) {
+					log.Debugf(rx.FindString(j.Name))
+					ProductFileURL = j.Links.Self.Href
+					DownloadURL = j.Links.Download.Href
+				}
+			}
 		}
-	} else { // This is the correct API, all the files are inside the file group MAP
-		for _, k := range versionJson.File_groups {
 
-			// GPDB Options
-			if core.RequestedDownloadProduct == "gpdb" {
-				// Default Download which is download the GPDB for Linux (no choice)
-				if strings.Contains(k.Name, DBServer) {
-					for _, j := range k.Product_files {
-						for _, name := range FileNameContains {
-							if strings.Contains(j.Name, name) && !strings.Contains(j.Name, IgnoreFileExtension) {
-								fmt.Println(j.Name, name)
-								ProductFileURL = j.Links.Self.Href
-								DownloadURL = j.Links.Download.Href
-							}
-						}
-					}
-				}
-			}
+		// GPCC option
+		if core.RequestedDownloadProduct == "gpcc" {
 
-			// GPCC option
-			if core.RequestedDownloadProduct == "gpcc" {
-				if strings.Contains(k.Name, GPCC) {
-					for _, j := range k.Product_files {
-						ProductOutputMap[j.Name] = j.Links.Self.Href
-						ProductOptions = append(ProductOptions, j.Name)
-					}
-				}
-			}
+			rx, _ := regexp.Compile(rx_gpcc)
 
-			// Others or fallback method
-			if core.RequestedDownloadProduct == "gpextras" {
+			if rx.MatchString(k.Name) {
+				log.Debugf(rx.FindString(k.Name))
 				for _, j := range k.Product_files {
 					ProductOutputMap[j.Name] = j.Links.Self.Href
 					ProductOptions = append(ProductOptions, j.Name)
 				}
 			}
-
 		}
+
+		// Others or fallback method
+		if core.RequestedDownloadProduct == "gpextras" {
+			for _, j := range k.Product_files {
+				ProductOutputMap[j.Name] = j.Links.Self.Href
+				ProductOptions = append(ProductOptions, j.Name)
+			}
+		}
+
 	}
 
 	// If its GPCC or GPextras, then ask users for choice.
@@ -219,6 +215,9 @@ func extract_filename_and_size(url string) error {
 	filename := strings.Split(ProductFileJsonType.Product_file.Aws_object_key, "/")
 	ProductFileName = filename[len(filename)-1]
 	ProductFileSize = ProductFileJsonType.Product_file.Size
+
+	log.Info("filename:" + ProductFileJsonType.Product_file.Aws_object_key)
+	log.Info("ProductFileName:" + ProductFileName)
 
 	return err
 

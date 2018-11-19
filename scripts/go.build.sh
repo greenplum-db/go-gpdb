@@ -15,18 +15,13 @@ abort() {
 cleanup() {
 	banner "Cleanup"
 	
-	src[0]="$BASE_DIR/github.com/op/go-logging"
-	src[1]="$BASE_DIR/gopkg.in/yaml.v2"
-	#src[2]='github.com/brendanstephens/go-gpdb'
-	src[3]="$BASE_DIR/go.tar.gz"
-	
 	for package in "${src[@]}"
 	do
 		{ rm -rf $package & } &>/dev/null
 		spinner $! "Removing Temporary File: $package"
 	done
 	
-	if $build_completed; then
+	if ! $build_complete; then
 		banner "Completed"
 		log "$PASS /vagrant/scripts/go.build.sh"
 	else
@@ -38,8 +33,6 @@ cleanup() {
 
 trap cleanup EXIT
 
-build_completed=false
-
 go_install() {	
 	# Download GO
 	{ wget -q https://storage.googleapis.com/golang/go$GO_BUILD.$OS-$ARCH.tar.gz -O $BASE_DIR/go.tar.gz & } &>/dev/null
@@ -50,12 +43,15 @@ go_install() {
 	{ tar -C "/usr/local" -xzf $BASE_DIR/go.tar.gz & } &>/dev/null
 	spinner $! "Extracting: $GO_BUILD"
 	if [ $? -ne 0 ]; then wait $!; abort $?; fi
+		
+	{ rm -rf "$BASE_DIR/go.tar.gz" & } &>/dev/null
+	spinner $! "Removing Temporary File: $BASE_DIR/go.tar.gz"
 	
 	# Notify	
 	log "$PASS GO Binary Version Installed: $GO_BUILD"
 
 	# Update Environment Variables if it doesn't exist
-	if ! ( grep -q "# GOLANG" $HOME/.profile &>/dev/null ); then
+	if ! ( grep -q "# GOLANG" /etc/profile.d/gpdb.profile.sh &>/dev/null ); then
 	    {
 	        echo '# GOLANG'
 	        echo 'export GOROOT=/usr/local/go'
@@ -65,7 +61,6 @@ go_install() {
 		spinner $! "Update Environment Variables"
 		if [ $? -ne 0 ]; then wait $!; abort $?; fi
 
-		source /etc/profile.d/gpdb.profile.sh		
 	fi 	
 }
 
@@ -112,13 +107,12 @@ else
 	fi
 fi
 
-# Download program dependencies
+source /etc/profile.d/gpdb.profile.sh		
+
+# Download program dependencies -- eventually, we will check for updates with git
 banner "Program Dependencies"
-
 src[0]='github.com/op/go-logging'
-src[1]='gopkg.in/yaml.v2'
-#src[2]='github.com/brendanstephens/go-gpdb'
-
+src[1]='github.com/codingconcepts/env' 	
 for package in "${src[@]}"
 do
 	{ go get $package & } &>/dev/null
@@ -126,17 +120,17 @@ do
 	if [ $? -ne 0 ]; then wait $!; abort $?; fi
 done
 
+# Compile Time...
 banner "Compiling"
-
 { go build /vagrant/gpdb/gpdb.go & } &>/dev/null
-spinner $! "Building 'gpdb.go'"
+spinner $! "Building"
 if [ $? -ne 0 ]; then wait $!; abort $?; fi
 
 { (mkdir -p $GOPATH/bin/ && mv -f gpdb $GOPATH/bin/) & } &>/dev/null
-spinner $! "Installing 'gpdb'"
+spinner $! "Installing"
 if [ $? -ne 0 ]; then wait $!; abort $?; fi
 
-build_completed=true
+build_complete=true
 
 exit 0
 
