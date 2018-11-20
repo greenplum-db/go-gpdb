@@ -4,10 +4,17 @@
 # Includes
 require "ipaddr"
 
-@ip = IPAddr.new "192.168.99.100"
+# EVN PIVNET DEFAULTS
+@pivnet_token = ENV['UAA_API_TOKEN'] || ""
+
+# EVN VM DEFAULTS
+@vm_cpus = ENV['VM_CPUS'].to_i || 2
+@vm_memory = ENV['VM_MEMORY'].to_i || 2048
+
+# ENV APPLICATION DEFAULTS
+@subnet = ENV['GPDB_SUBNET'] || "192.168.99.100"
 @hostname = ENV['GPDB_HOSTNAME'] || "go-gpdb"
 @segments = ENV['GPDB_SEGMENTS'].to_i || 0
-@pivnet_token = ENV['UAA_API_TOKEN'] || ""
 
 # Define a Template for Building All Our VMs.
 def build_vm( config, hostname, ip )
@@ -32,6 +39,8 @@ end
 
 # All Vagrant configuration is done below. 
 Vagrant.configure("2") do |config|
+
+  @ip = IPAddr.new @subnet
 
   # You can find all the vagrant boxes at location here
   # https://app.vagrantup.com/bento/
