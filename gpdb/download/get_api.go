@@ -1,16 +1,17 @@
 package download
 
+
 import (
-	"../core"
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
+	"os"
+	"net/http"
 	"io"
 	"io/ioutil"
-	"net/http"
-	"os"
+	"errors"
 	"strconv"
+	"fmt"
+	"encoding/json"
+	"github.com/ielizaga/piv-go-gpdb/core"
+	"bytes"
 )
 
 // Implementing the new PivNet API token system
@@ -70,25 +71,23 @@ func GetApi(method string, urlLink string, download bool, filename string, files
 	if core.IsValueEmpty(core.EnvYAML.Download.ApiToken) {
 		return []byte(""), errors.New("Cannot find value for \"API_TOKEN\", check \"config.yml\"")
 	} else {
-		//Initial kickoff will not have any valid token
-		//so we will request for the token
+		 //Initial kickoff will not have any valid token
+		 //so we will request for the token
 		if AuthenicationResponse.Token == "" {
-			req.Header.Set("Authorization", "Bearer "+core.EnvYAML.Download.ApiToken)
+			req.Header.Set("Authorization", "Bearer " + core.EnvYAML.Download.ApiToken)
 			new_refresh_token, err := getToken(core.EnvYAML.Download.ApiToken)
 			if err != nil || new_refresh_token == "" {
 				return []byte(""), fmt.Errorf("Authentication Failure: %s", err.Error())
 			}
 			return []byte(""), nil
 		} else { // hey we have the access token, so lets move on.
-			req.Header.Set("Authorization", "Bearer "+AuthenicationResponse.Token)
+			req.Header.Set("Authorization", "Bearer " + AuthenicationResponse.Token)
 		}
 	}
 
 	// Handle the request
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return []byte(""), err
-	}
+	if err != nil {return []byte(""), err}
 
 	// If the status code is not 200, then error out
 	if resp.StatusCode != http.StatusOK {
@@ -105,6 +104,7 @@ func GetApi(method string, urlLink string, download bool, filename string, files
 				"to PivNet and accept the end user license agreement and then try again, as this step cannot be avoided. Click on the link " +
 				"mentioned below to redirect you to website to accept the EULA \x1b[0m")
 
+
 			// Read the error text and store it
 			bodyText, _ := ioutil.ReadAll(resp.Body)
 			defer resp.Body.Close()
@@ -120,7 +120,7 @@ func GetApi(method string, urlLink string, download bool, filename string, files
 			}
 
 		}
-		return []byte(""), errors.New("API ERROR: HTTP Status code expected (" + strconv.Itoa(http.StatusOK) + ") / received (" + strconv.Itoa(resp.StatusCode) + "), URL (" + urlLink + ")")
+		return []byte(""), errors.New("API ERROR: HTTP Status code expected ("+ strconv.Itoa(http.StatusOK) +") / received (" + strconv.Itoa(resp.StatusCode) + "), URL (" + urlLink + ")")
 	}
 
 	// Close the body once its done
@@ -137,9 +137,7 @@ func GetApi(method string, urlLink string, download bool, filename string, files
 
 		// Create th file
 		out, err := os.Create(filename)
-		if err != nil {
-			return []byte(""), err
-		}
+		if err != nil {return []byte(""), err}
 
 		// Initalize progress bar
 		done := make(chan int64)
@@ -148,16 +146,12 @@ func GetApi(method string, urlLink string, download bool, filename string, files
 
 		// Start Downloading
 		n, err := io.Copy(out, resp.Body)
-		if err != nil {
-			return []byte(""), err
-		}
+		if err != nil {return []byte(""), err}
 		done <- n
 	}
 
 	// Read the json
 	bodyText, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return []byte(""), err
-	}
+	if err != nil {return []byte(""), err}
 	return bodyText, nil
 }
