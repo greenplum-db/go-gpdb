@@ -156,6 +156,15 @@ func unzip(search string) string {
 			Fatalf("Couldn't unzip the file, err: %v", err)
 		}
 		Debugf("Unzipped the file %s completed successfully", binary)
+
+		// Touch zip file: update atime and mtime to currenttime
+		currenttime := time.Now().Local()
+		err = os.Chtimes(binary, currenttime, currenttime)
+		if err != nil {
+			Errorf("Couldn't touch file %v: %v", binary, err)
+		}
+		Debugf("Touched file %v", binary)
+
 		return obtainExecutableFilename(search)
 	} else {
 		if cmdOptions.Product == "gpdb" {
