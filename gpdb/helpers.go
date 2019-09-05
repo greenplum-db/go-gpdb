@@ -291,3 +291,13 @@ func sizeInMB(size int64) int64 {
 	}
 	return size
 }
+
+// Is this GPDB 6 version
+func isThisGPDB6xAndAbove() bool {
+	v := extractVersion(cmdOptions.Version)
+	if v >= 6 {
+		return true
+	} else {
+		return false
+	}
+}
