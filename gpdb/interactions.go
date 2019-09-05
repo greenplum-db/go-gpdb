@@ -141,10 +141,16 @@ func (r *Responses) WhichProduct(token string)  {
 
 	// This is the correct API, all the files are inside the file group MAP
 	for _, k := range r.VersionList.File_groups {
-
 		// GPDB Options
 		if cmdOptions.Product == "gpdb" {
-			rx, _ := regexp.Compile("(?i)" + rx_gpdb)
+			var rx *regexp.Regexp
+			majorVersion := extractVersion(cmdOptions.Version)
+			if majorVersion >= 6 { // From version 6 we will use the newer regex
+				rx, _ = regexp.Compile("(?i)" + rx_gpdb_for_6_n_above)
+			} else {
+				rx, _ = regexp.Compile("(?i)" + rx_gpdb)
+			}
+
 			for _, j := range k.Product_files {
 				if rx.MatchString(j.Name) {
 					Debugf("gpdb product list: %v", rx.FindString(j.Name))
