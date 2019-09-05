@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"runtime"
 	"strings"
-	"github.com/sirupsen/logrus"
 )
 
 var logger = logrus.New()
@@ -82,7 +82,6 @@ func Warnf(format string, args ...interface{}) {
 		entry.Warnf(format, args...)
 	}
 }
-
 
 // Error logs a message at level Error on the standard logger.
 func Error(args ...interface{}) {
@@ -167,7 +166,7 @@ func fileInfo(skip int) string {
 }
 
 // Setup or Initialize the logger
-func initLogger(verbose bool)  {
+func initLogger(verbose bool) {
 	// Set the formatter option for logrus
 	formatter := new(logrus.TextFormatter)
 	formatter.TimestampFormat = "2006-01-02 15:04:05"

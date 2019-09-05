@@ -81,7 +81,7 @@ func isDbHealthy(sourcePath, port string) bool {
 }
 
 // Start the database if not started
-func startDBifNotStarted(envFile string)  {
+func startDBifNotStarted(envFile string) {
 	// is the database running , then return
 	if isDbHealthy(envFile, "") { // Database is started and running
 		Debugf("Database seems to be running, contining...")
@@ -110,7 +110,7 @@ func startDB(envFile string) {
 	// BashScript
 	startFile := Config.CORE.TEMPDIR + "start.sh"
 	generateBashFileAndExecuteTheBashFile(startFile, "/bin/sh", []string{
-		"source "+ envFile,
+		"source " + envFile,
 		"gpstart -a",
 	})
 

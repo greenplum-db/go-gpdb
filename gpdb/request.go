@@ -61,7 +61,7 @@ func getToken() string {
 }
 
 // Generate the URL headers
-func generateHandler(method, url, token string, download bool) (*http.Response){
+func generateHandler(method, url, token string, download bool) (*http.Response) {
 	// Create new http request
 	request, err := http.NewRequest(method, url, nil)
 	if err != nil {
@@ -72,7 +72,7 @@ func generateHandler(method, url, token string, download bool) (*http.Response){
 	// Add Header to the Http Request
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", "Bearer " + token)
+	request.Header.Set("Authorization", "Bearer "+token)
 
 	// Skip SSL stuffs
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"strings"
 	"fmt"
+	"strings"
 )
 
 // Build uninstall script
@@ -22,7 +22,7 @@ union
 	// From GPDB6 onwards there is no filespace, so we cannot know what is the default data directory from database
 	// we will get that information from the gpinitsystem struct that we created earlier
 	if isThisGPDB6xAndAbove() {
-		queryString = queryString + fmt.Sprintf(`select $$ssh $$ || c.hostname || $$ "rm -rf %s*" $$ from gp_segment_configuration c`, i.GPInitSystem.MasterDir + "/" + i.GPInitSystem.ArrayName)
+		queryString = queryString + fmt.Sprintf(`select $$ssh $$ || c.hostname || $$ "rm -rf %s*" $$ from gp_segment_configuration c`, i.GPInitSystem.MasterDir+"/"+i.GPInitSystem.ArrayName)
 	} else {
 		queryString = queryString + `select $$ssh $$ || c.hostname || $$ "rm -rf $$ || f.fselocation || $$"$$ from pg_filespace_entry f, gp_segment_configuration c where c.dbid = f.fsedbid`
 	}
@@ -37,9 +37,8 @@ union
 	createFile(uninstallFile)
 	writeFile(uninstallFile, []string{
 		string(cmdOut),
-		"rm -rf "+ Config.INSTALL.ENVDIR +"env_" + cmdOptions.Version + "_"+ i.Timestamp,
+		"rm -rf " + Config.INSTALL.ENVDIR + "env_" + cmdOptions.Version + "_" + i.Timestamp,
 		"rm -rf " + uninstallFile,
-
 	})
 	return nil
 }
@@ -66,13 +65,12 @@ func (i *Installation) uninstallGPCCScript() error {
 		"psql -d template1 -p $PGPORT -Atc \"drop role gpmon\" &>/dev/null",
 		"rm -rf $MASTER_DATA_DIRECTORY/gpperfmon/*",
 		"cp " + i.EnvFile + " " + i.EnvFile + "." + i.Timestamp,
-		"egrep -v \"GPCC_UNINSTALL_LOC|GPCCVersion|GPPERFMONHOME|GPCC_INSTANCE_NAME|GPCCPORT\" " + i.EnvFile + "." + i.Timestamp +" > " + i.EnvFile,
+		"egrep -v \"GPCC_UNINSTALL_LOC|GPCCVersion|GPPERFMONHOME|GPCC_INSTANCE_NAME|GPCCPORT\" " + i.EnvFile + "." + i.Timestamp + " > " + i.EnvFile,
 		"rm -rf " + i.EnvFile + "." + i.Timestamp,
 		"rm -rf " + i.GPCC.UninstallFile,
 	})
 	return nil
 }
-
 
 // Uninstall using gpdeletesystem
 func removeEnvGpDeleteSystem(envFile string) error {

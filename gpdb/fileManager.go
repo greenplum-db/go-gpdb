@@ -24,17 +24,16 @@ func createFile(path string) {
 }
 
 // Open the file
-func openFile(path string, openType int ,permission os.FileMode) *os.File {
+func openFile(path string, openType int, permission os.FileMode) *os.File {
 	Debugf("Opening the file: %s", path)
 
 	// re-open file
-	var file, err = os.OpenFile(path, openType , permission)
+	var file, err = os.OpenFile(path, openType, permission)
 	if err != nil {
 		Fatalf("Error in opening the file: %v", err)
 	}
 	return file
 }
-
 
 // write to the file
 func writeFile(path string, contents []string) {

@@ -19,14 +19,13 @@ const (
 var (
 	rx_gpcc = `Greenplum Command Center`
 	// Name of the software
-	rx_gpdb =  `(greenplum-db-(\d+\.)(\d+\.)(\d+)?(\.\d)-rhel5-x86_64.zip|Greenplum Database ` +
+	rx_gpdb = `(greenplum-db-(\d+\.)(\d+\.)(\d+)?(\.\d)-rhel5-x86_64.zip|Greenplum Database ` +
 		`(\d+\.)(\d+\.)(\d+)?(\.\d)?( Binary Installer)?( |  )for ` +
 		`((Red Hat Enterprise|RedHat Enterprise|RedHat Entrerprise) Linux|RHEL).*?(5|6|7))`
 	// Starting from 6 we only care about RedHat 7 OS
-	rx_gpdb_for_6_n_above =
-		`(greenplum-db-(\d+\.)(\d+\.)(\d+)?(\.\d)-rhel5-x86_64.zip|Greenplum Database ` +
-			`(\d+\.)(\d+\.)(\d+)?(\-beta)?(\.\d)?( (Binary Installer|Installer))?( |  )for ` +
-			`((Red Hat Enterprise|RedHat Enterprise|RedHat Entrerprise) Linux|RHEL).*?(7))`
+	rx_gpdb_for_6_n_above = `(greenplum-db-(\d+\.)(\d+\.)(\d+)?(\.\d)-rhel5-x86_64.zip|Greenplum Database ` +
+		`(\d+\.)(\d+\.)(\d+)?(\-beta)?(\.\d)?( (Binary Installer|Installer))?( |  )for ` +
+		`((Red Hat Enterprise|RedHat Enterprise|RedHat Entrerprise) Linux|RHEL).*?(7))`
 )
 
 // Struct to where all the API response will be stored
@@ -340,10 +339,10 @@ func displayDownloadedProducts(whichType string) []string {
 		} else { // Install command called this, so show only the DB related files
 			if strings.HasPrefix(downloadedProduct, "greenplum-db") &&
 				strings.HasSuffix(downloadedProduct, "zip") {
-					index = index + 1
-					output = append(output, fmt.Sprintf("%d|%s|%d|%s", index, downloadedProduct,
-						sizeInMB(sizeOfFile), v))
-					downloadedProducts = append(downloadedProducts, downloadedProduct)
+				index = index + 1
+				output = append(output, fmt.Sprintf("%d|%s|%d|%s", index, downloadedProduct,
+					sizeInMB(sizeOfFile), v))
+				downloadedProducts = append(downloadedProducts, downloadedProduct)
 			}
 		}
 	}

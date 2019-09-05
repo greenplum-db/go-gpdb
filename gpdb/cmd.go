@@ -1,39 +1,39 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
 	"fmt"
+	"github.com/spf13/cobra"
 )
 
 // Global Parameter
 var (
-	cmdOptions Command
+	cmdOptions              Command
 	AcceptedDownloadProduct = []string{"gpdb", "gpcc", "gpextras"}
-	AcceptedInstallProduct = []string{"gpdb", "gpcc"}
+	AcceptedInstallProduct  = []string{"gpdb", "gpcc"}
 )
 
 // Command line options
 type Command struct {
-	Product 	string
-	Version 	string
-	CCVersion 	string
-	Debug		bool
-	Install 	bool
-	Stop        bool
-	Force	    bool
-	Standby	    bool
-	ListEnv		bool
-	Vars		bool
-	Always  	bool
+	Product   string
+	Version   string
+	CCVersion string
+	Debug     bool
+	Install   bool
+	Stop      bool
+	Force     bool
+	Standby   bool
+	ListEnv   bool
+	Vars      bool
+	Always    bool
 }
 
 // Sub Command: Download
 // When this command is used it goes and download the product from pivnet
 var downloadCmd = &cobra.Command{
-	Use:   "download",
+	Use:     "download",
 	Aliases: []string{`d`},
-	Short: "Download the product from pivotal network",
-	Long:  "Download sub-command helps to download the products that are greenplum related from pivotal network",
+	Short:   "Download the product from pivotal network",
+	Long:    "Download sub-command helps to download the products that are greenplum related from pivotal network",
 	Example: "For examples refer: https://github.com/pivotal-gss/go-gpdb/tree/master/gpdb#download",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		// Accept only the options that we care about
@@ -59,10 +59,10 @@ func downloadFlags() {
 // Sub Command: Install
 // When this command is used it goes and install the product that was downloaded from above
 var installCmd = &cobra.Command{
-	Use:   "install",
+	Use:     "install",
 	Aliases: []string{`i`},
-	Short: "Install the product downloaded from download command",
-	Long:  "Install sub-command helps to install the products that was downloaded using the download command",
+	Short:   "Install the product downloaded from download command",
+	Long:    "Install sub-command helps to install the products that was downloaded using the download command",
 	Example: "For examples refer: https://github.com/pivotal-gss/go-gpdb/tree/master/gpdb#install",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		// Accept only the options that we care about
@@ -103,10 +103,10 @@ func installFlags() {
 // Sub Command: Remove
 // When this command is used it goes and remove the product that was installed by this program
 var removeCmd = &cobra.Command{
-	Use:   "remove",
+	Use:     "remove",
 	Aliases: []string{`r`},
-	Short: "Removes the product installed using the install command",
-	Long:  "Remove sub-command helps to remove the products that was installed using the install command",
+	Short:   "Removes the product installed using the install command",
+	Long:    "Remove sub-command helps to remove the products that was installed using the install command",
 	Example: "For examples refer: https://github.com/pivotal-gss/go-gpdb/tree/master/gpdb#remove",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Remove the installation
@@ -118,16 +118,16 @@ var removeCmd = &cobra.Command{
 func removeFlags() {
 	removeCmd.Flags().StringVarP(&cmdOptions.Version, "version", "v", "", "Which GPDB version software do you want to remove?")
 	removeCmd.MarkFlagRequired("version")
-	removeCmd.Flags().BoolVarP(&cmdOptions.Force, "force", "f",false, "OPTIONAL: If the database start fails, use force to force manual removal")
+	removeCmd.Flags().BoolVarP(&cmdOptions.Force, "force", "f", false, "OPTIONAL: If the database start fails, use force to force manual removal")
 }
 
 // Sub Command: Environment
 // When this command is used it goes and remove the product that was installed by this program
 var envCmd = &cobra.Command{
-	Use:   "env",
+	Use:     "env",
 	Aliases: []string{`e`},
-	Short: "Show all the environment installed",
-	Long:  "Env sub-command helps to show all the products version installed",
+	Short:   "Show all the environment installed",
+	Long:    "Env sub-command helps to show all the products version installed",
 	Example: "For examples refer: https://github.com/pivotal-gss/go-gpdb/tree/master/gpdb#env",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		// If vars and list both options are provided, display error
@@ -152,9 +152,9 @@ func envFlags() {
 
 // The root CLI.
 var rootCmd = &cobra.Command{
-	Use:   fmt.Sprintf("%s [command]", programName),
-	Short: "Download / install / remove and manage the software of GPDB products",
-	Long: "This program helps to download / install / remove and manage the software of GPDB products",
+	Use:     fmt.Sprintf("%s [command]", programName),
+	Short:   "Download / install / remove and manage the software of GPDB products",
+	Long:    "This program helps to download / install / remove and manage the software of GPDB products",
 	Version: programVersion,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// Before running any command Setup the logger log level
@@ -169,7 +169,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func init ()  {
+func init() {
 	// root command flags
 	rootCmd.PersistentFlags().BoolVarP(&cmdOptions.Debug, "debug", "d", false, "Enable verbose or debug logging")
 

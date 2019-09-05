@@ -1,7 +1,7 @@
 package main
 
 var (
-	programName = "gpdb"
+	programName    = "gpdb"
 	programVersion = "3.1.2"
 )
 

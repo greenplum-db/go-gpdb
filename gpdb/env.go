@@ -8,16 +8,16 @@ import (
 )
 
 type Environment struct {
-	GpHome 				string
-	MasterDir 			string
-	PgPort 				string
-	PgDatabase 			string
-	SingleOrMulti 		string
-	GpPerfmonHome 		string
-	GpccInstanceName 	string
-	GpccPort 			string
-	GpccVersion 		string
-	GpccUninstallLoc 	string
+	GpHome           string
+	MasterDir        string
+	PgPort           string
+	PgDatabase       string
+	SingleOrMulti    string
+	GpPerfmonHome    string
+	GpccInstanceName string
+	GpccPort         string
+	GpccVersion      string
+	GpccUninstallLoc string
 }
 
 // Extract the data from the envFile
@@ -52,13 +52,13 @@ func (i *Installation) createEnvFile() {
 	// Create the file
 	createFile(i.EnvFile)
 	writeFile(i.EnvFile, []string{
-		"export GPHOME="+ i.BinaryInstallationLocation,
+		"export GPHOME=" + i.BinaryInstallationLocation,
 		"export PYTHONPATH=$GPHOME/lib/python",
 		"export PYTHONHOME=$GPHOME/ext/python",
 		"export PATH=$GPHOME/bin:$PYTHONHOME/bin:$PATH",
 		"export LD_LIBRARY_PATH=$GPHOME/lib:$PYTHONHOME/lib:$LD_LIBRARY_PATH",
 		"export OPENSSL_CONF=$GPHOME/etc/openssl.cnf",
-		"export MASTER_DATA_DIRECTORY="+ i.GPInitSystem.MasterDir + "/" + i.GPInitSystem.ArrayName + "-1",
+		"export MASTER_DATA_DIRECTORY=" + i.GPInitSystem.MasterDir + "/" + i.GPInitSystem.ArrayName + "-1",
 		"export PGPORT=" + i.GPInitSystem.MasterPort,
 		"export PGDATABASE=" + i.GPInitSystem.DBName,
 		"export singleOrMulti=" + i.SingleORMulti,
@@ -186,7 +186,7 @@ func env() {
 		if !cmdOptions.Vars {
 			Infof("Listing all the environment installed with version: %s", cmdOptions.Version)
 		}
-		envFile = installedEnvFiles("*" + cmdOptions.Version + "*", "choose", false)
+		envFile = installedEnvFiles("*"+cmdOptions.Version+"*", "choose", false)
 	}
 
 	// User asked to print all variables for this environment

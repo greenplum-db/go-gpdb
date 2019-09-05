@@ -78,7 +78,7 @@ func executeOsCommand(command string, arguments ...string) {
 	// Wait for it to finish
 	// For some reason the gpinitsystem produces exit code 1 even then command ran successfully , so we ignore the exit code 1 here for gpinitsystem
 	err = cmd.Wait()
-	if err != nil && (strings.HasSuffix(command, "gpinitsystem") && err.Error() != "exit status 1"){
+	if err != nil && (strings.HasSuffix(command, "gpinitsystem") && err.Error() != "exit status 1") {
 		Fatalf("Failed while waiting for the command %s err: %v", command, err)
 	}
 }

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/jinzhu/configor"
-	"strconv"
-	"os"
-	"strings"
 	"fmt"
+	"github.com/jinzhu/configor"
+	"os"
+	"strconv"
+	"strings"
 )
 
 // Struct that store the configuration file for the program to run
@@ -31,7 +31,7 @@ var Config = struct {
 		GPMONPASS            string `yaml:"GPMON_PASS"`
 		MASTERDATADIRECTORY  string `yaml:"MASTER_DATA_DIRECTORY"`
 		SEGMENTDATADIRECTORY string `yaml:"SEGMENT_DATA_DIRECTORY"`
-		MIRRORDATADIRECTORY	 string	`yaml:"MIRROR_DATA_DIRECTORY"`
+		MIRRORDATADIRECTORY  string `yaml:"MIRROR_DATA_DIRECTORY"`
 		TOTALSEGMENT         int    `yaml:"TOTAL_SEGMENT"`
 	} `yaml:"INSTALL"`
 }{}
@@ -80,24 +80,24 @@ func validateConfiguration() {
 	Debug("Checking if the directories needed for the program exists")
 
 	// Default parameter
-	Config.CORE.BASEDIR = endWithSlash(setDefaults(Config.CORE.BASEDIR, "/home/gpadmin/", "BASE_DIR"))  // Base Dir
-	Config.CORE.APPLICATIONNAME = setDefaults(Config.CORE.APPLICATIONNAME, "gpdbinstall", "APPLICATION_NAME") // App name
-	Config.CORE.TEMPDIR = endWithSlash(setDefaults(Config.CORE.TEMPDIR, "/temp/", "TEMP_DIR")) // Temp Directory
-	Config.DOWNLOAD.DOWNLOADDIR = endWithSlash(setDefaults(Config.DOWNLOAD.DOWNLOADDIR, "/download/", "DOWNLOAD_DIR")) // Download Directory
-	Config.INSTALL.ENVDIR = endWithSlash(setDefaults(Config.INSTALL.ENVDIR, "/env/", "ENV_DIR")) // Env Directory
-	Config.INSTALL.UNINTSALLDIR = endWithSlash(setDefaults(Config.INSTALL.UNINTSALLDIR, "/uninstall/", "UNINTSALL_DIR")) // Uninstall Directory
-	Config.INSTALL.FUTUREREFDIR = endWithSlash(setDefaults(Config.INSTALL.FUTUREREFDIR, "/future_reference/", "FUTUREREF_DIR")) // Future reference Directory
-	Config.INSTALL.MASTERDATADIRECTORY = endWithSlash(setDefaults(Config.INSTALL.MASTERDATADIRECTORY, "/data/master/", "MASTER_DATA_DIRECTORY")) // Master Directory
+	Config.CORE.BASEDIR = endWithSlash(setDefaults(Config.CORE.BASEDIR, "/home/gpadmin/", "BASE_DIR"))                                               // Base Dir
+	Config.CORE.APPLICATIONNAME = setDefaults(Config.CORE.APPLICATIONNAME, "gpdbinstall", "APPLICATION_NAME")                                        // App name
+	Config.CORE.TEMPDIR = endWithSlash(setDefaults(Config.CORE.TEMPDIR, "/temp/", "TEMP_DIR"))                                                       // Temp Directory
+	Config.DOWNLOAD.DOWNLOADDIR = endWithSlash(setDefaults(Config.DOWNLOAD.DOWNLOADDIR, "/download/", "DOWNLOAD_DIR"))                               // Download Directory
+	Config.INSTALL.ENVDIR = endWithSlash(setDefaults(Config.INSTALL.ENVDIR, "/env/", "ENV_DIR"))                                                     // Env Directory
+	Config.INSTALL.UNINTSALLDIR = endWithSlash(setDefaults(Config.INSTALL.UNINTSALLDIR, "/uninstall/", "UNINTSALL_DIR"))                             // Uninstall Directory
+	Config.INSTALL.FUTUREREFDIR = endWithSlash(setDefaults(Config.INSTALL.FUTUREREFDIR, "/future_reference/", "FUTUREREF_DIR"))                      // Future reference Directory
+	Config.INSTALL.MASTERDATADIRECTORY = endWithSlash(setDefaults(Config.INSTALL.MASTERDATADIRECTORY, "/data/master/", "MASTER_DATA_DIRECTORY"))     // Master Directory
 	Config.INSTALL.SEGMENTDATADIRECTORY = endWithSlash(setDefaults(Config.INSTALL.SEGMENTDATADIRECTORY, "/data/primary/", "SEGMENT_DATA_DIRECTORY")) // Segment Directory
-	Config.INSTALL.MIRRORDATADIRECTORY = endWithSlash(setDefaults(Config.INSTALL.MIRRORDATADIRECTORY, "/data/mirror/", "MIRROR_DATA_DIRECTORY")) // Segment Directory
-	Config.INSTALL.MASTERPASS = setDefaults(Config.INSTALL.MASTERPASS, "changeme", "MASTER_PASS") // Master password
-	Config.INSTALL.GPMONPASS = setDefaults(Config.INSTALL.GPMONPASS, "changeme", "GPMON_PASS") // Gpmon password
-	Config.INSTALL.MASTERUSER = setDefaults(Config.INSTALL.MASTERUSER, "gpadmin", "MASTER_USER") // Master userv
-	Config.INSTALL.TOTALSEGMENT = strToInt(setDefaults(strconv.Itoa(Config.INSTALL.TOTALSEGMENT), "2", "TOTAL_SEGMENT")) // Total Segments
+	Config.INSTALL.MIRRORDATADIRECTORY = endWithSlash(setDefaults(Config.INSTALL.MIRRORDATADIRECTORY, "/data/mirror/", "MIRROR_DATA_DIRECTORY"))     // Segment Directory
+	Config.INSTALL.MASTERPASS = setDefaults(Config.INSTALL.MASTERPASS, "changeme", "MASTER_PASS")                                                    // Master password
+	Config.INSTALL.GPMONPASS = setDefaults(Config.INSTALL.GPMONPASS, "changeme", "GPMON_PASS")                                                       // Gpmon password
+	Config.INSTALL.MASTERUSER = setDefaults(Config.INSTALL.MASTERUSER, "gpadmin", "MASTER_USER")                                                     // Master userv
+	Config.INSTALL.TOTALSEGMENT = strToInt(setDefaults(strconv.Itoa(Config.INSTALL.TOTALSEGMENT), "2", "TOTAL_SEGMENT"))                             // Total Segments
 
 	// Fail if these parameter is missing
-	Config.CORE.OS = isMissing(Config.CORE.OS, "OS") // Go build OS
-	Config.CORE.ARCH = isMissing(Config.CORE.ARCH, "ARCH") // Go build ARCH
+	Config.CORE.OS = isMissing(Config.CORE.OS, "OS")                 // Go build OS
+	Config.CORE.ARCH = isMissing(Config.CORE.ARCH, "ARCH")           // Go build ARCH
 	Config.CORE.GOBUILD = isMissing(Config.CORE.GOBUILD, "GO_BUILD") // Go build version
 
 	// Check if API Token
@@ -113,7 +113,7 @@ func setupPath() {
 	base_dir := Config.CORE.BASEDIR + Config.CORE.APPLICATIONNAME
 
 	// Temp the files to
-	Config.CORE.TEMPDIR =  base_dir + Config.CORE.TEMPDIR
+	Config.CORE.TEMPDIR = base_dir + Config.CORE.TEMPDIR
 	CreateDir(Config.CORE.TEMPDIR)
 
 	// Download the files to

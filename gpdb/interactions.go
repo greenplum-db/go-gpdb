@@ -45,12 +45,11 @@ func PromptChoice(TotalOptions int) int {
 	return choiceEntered
 }
 
-
 // Prompt for confirmation
 func YesOrNoConfirmation() string {
 	Debugf("Promoting for yes or no confirmation")
 
-	var YesOrNo = map[string]string{"y":"y", "ye":"y", "yes":"y", "n":"n", "no":"n" }
+	var YesOrNo = map[string]string{"y": "y", "ye": "y", "yes": "y", "n": "n", "no": "n"}
 
 	// For unit test cases to work
 	if !IsValueEmpty(os.Getenv("TEST_YES_CONFIRMATION")) {
@@ -65,7 +64,7 @@ func YesOrNoConfirmation() string {
 			choiceEntered := input.Text()
 
 			// If its a valid value move on
-			if YesOrNo[strings.ToLower(choiceEntered)] == "y" {  // Is it Yes
+			if YesOrNo[strings.ToLower(choiceEntered)] == "y" { // Is it Yes
 				return choiceEntered
 			} else if YesOrNo[strings.ToLower(choiceEntered)] == "n" { // Is it No
 				return choiceEntered
@@ -107,10 +106,10 @@ func (r *Responses) ShowAvailableVersion(token string) {
 
 		// Sort all the keys
 		var data = []string{"Index | Product Version",
-							"---------| ------------------------",
+			"---------| ------------------------",
 		}
 		for index, version := range ReleaseVersion {
-			data = append(data, strconv.Itoa(index+1)+ "|" +  version)
+			data = append(data, strconv.Itoa(index+1)+"|"+version)
 		}
 		printOnScreen("Please select the version from the drop down list", data)
 
@@ -132,7 +131,7 @@ func (r *Responses) ShowAvailableVersion(token string) {
 
 // Ask user what file in that version are they interested in downloading
 // Default is to download GPDB, GPCC and other with a option from parser
-func (r *Responses) WhichProduct(token string)  {
+func (r *Responses) WhichProduct(token string) {
 	Info("Checking for the version to download")
 
 	// Clearing up the buffer to ensure we are using a clean array and MAP
@@ -163,7 +162,7 @@ func (r *Responses) WhichProduct(token string)  {
 		if cmdOptions.Product == "gpcc" {
 			rx, _ := regexp.Compile(rx_gpcc)
 			if rx.MatchString(k.Name) {
-				Debugf("gpdb product list: ",rx.FindString(k.Name))
+				Debugf("gpdb product list: ", rx.FindString(k.Name))
 				for _, j := range k.Product_files {
 					ProductOutputMap[j.Name] = j.Links.Self.Href
 					ProductOptions = append(ProductOptions, j.Name)
@@ -186,7 +185,7 @@ func (r *Responses) WhichProduct(token string)  {
 			"----------| ------------------------------------------------",
 		}
 		for index, product := range ProductOptions {
-			data = append(data, strconv.Itoa(index+1)+ "|" +  product)
+			data = append(data, strconv.Itoa(index+1)+"|"+product)
 		}
 
 		printOnScreen("Please select the product from the drop down list", data)
