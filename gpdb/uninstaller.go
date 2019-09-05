@@ -17,8 +17,15 @@ select $$ssh $$ || hostname || $$ "ps -ef|grep postgres|grep -v grep|grep $$ || 
 union
 select $$ssh $$ || hostname || $$ "rm -rf /tmp/.s.PGSQL.$$ || port || $$*"$$ from gp_segment_configuration
 union
-select $$ssh $$ || c.hostname || $$ "rm -rf $$ || f.fselocation || $$"$$ from pg_filespace_entry f, gp_segment_configuration c where c.dbid = f.fsedbid
 `
+
+	// From GPDB6 onwards there is no filespace, so we cannot know what is the default data directory from database
+	// we will get that information from the gpinitsystem struct that we created earlier
+	if isThisGPDB6xAndAbove() {
+		queryString = queryString + fmt.Sprintf(`select $$ssh $$ || c.hostname || $$ "rm -rf %s*" $$ from gp_segment_configuration c`, i.GPInitSystem.MasterDir + "/" + i.GPInitSystem.ArrayName)
+	} else {
+		queryString = queryString + `select $$ssh $$ || c.hostname || $$ "rm -rf $$ || f.fselocation || $$"$$ from pg_filespace_entry f, gp_segment_configuration c where c.dbid = f.fsedbid`
+	}
 
 	// Execute the query
 	cmdOut, err := executeOsCommandOutput("psql", "-p", i.GPInitSystem.MasterPort, "-d", "template1", "-Atc", queryString)
