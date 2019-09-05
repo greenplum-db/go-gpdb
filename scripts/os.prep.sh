@@ -57,7 +57,7 @@ banner "Package Installation"
 } &> /dev/null
 spinner $! "Cleaning RPM cache"
 
-{ sudo yum -y -q -e 0 install bc ed gdb git m4 strace tar unzip vim-enhanced wget & } &> /tmp/yum.out
+{ sudo yum -y -q -e 0 install bc ed gdb git m4 strace tar unzip vim-enhanced wget sshpass & } &> /tmp/yum.out
 spinner $! "Installing RPMs"
 
 ## Default Directories & Permissions

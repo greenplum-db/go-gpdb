@@ -8,6 +8,7 @@ import (
 	"github.com/mholt/archiver"
 	"github.com/ryanuber/columnize"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -141,21 +142,18 @@ func removeOldBinFiles(search string) {
 }
 
 // Unzip the binaries.
-func unzip(search string) string {
+func locateAndExtractPackage(search string) (string, bool) {
 	// Check if we can find the binaries in the directory
-	allfiles, _ := FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf("%s.zip", search))
+	allfiles, _ := FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf("%s", search))
 
 	// Did we find any
 	if len(allfiles) > 0 {
 		binary := allfiles[0]
-		Infof("Found & unzip the binary for the version %s: %s", cmdOptions.Version, binary)
-		removeOldBinFiles(search)
-		err := archiver.Unarchive(binary, Config.DOWNLOAD.DOWNLOADDIR)
-		if err != nil {
-			Fatalf("Couldn't unzip the file, err: %v", err)
+		if strings.HasSuffix(binary, ".rpm") {
+			return locatedRpmFile(search, binary)
+		} else {
+			return locatedBinaryFile(search, binary)
 		}
-		Debugf("Unzipped the file %s completed successfully", binary)
-		return obtainExecutableFilename(search)
 	} else {
 		if cmdOptions.Product == "gpdb" {
 			Fatalf("No binary zip found for the product %s with version %s under directory %s", cmdOptions.Product, cmdOptions.Version, Config.DOWNLOAD.DOWNLOADDIR)
@@ -165,6 +163,40 @@ func unzip(search string) string {
 			Fatalf("Don't know the installation tag for product provided: %s", cmdOptions.Product)
 		}
 	}
+	return "", true
+}
+
+// located a binary file
+func locatedBinaryFile(search, binary string) (string, bool) {
+	Infof("Found & unzip the binary for the version %s: %s", cmdOptions.Version, binary)
+	removeOldBinFiles(search)
+	err := archiver.Unarchive(binary, Config.DOWNLOAD.DOWNLOADDIR)
+	if err != nil {
+		Fatalf("Couldn't unzip the file, err: %v", err)
+	}
+	Debugf("Unzipped the file %s completed successfully", binary)
+	return obtainExecutableFilename(search), true
+}
+
+// located a rpm file
+func locatedRpmFile(search, binary string) (string, bool) {
+	Infof("Found a rpm binary for the version %s: %s", cmdOptions.Version, binary)
+	return binary, false
+}
+
+// Locate the full directory name where the rpm was installed
+func locateGreenplumInstallationDirectory() string {
+	// rpm usually installs the software in /usr/local
+	// we need to check what is the directory name it has taken
+	baseDir := "/usr/local/"
+	folders, _ := FilterDirsGlob(baseDir, fmt.Sprintf("*%s*", cmdOptions.Version))
+	if len(folders) > 0 {
+		// We found one
+		return folders[0]
+	} else {
+		Fatalf(fmt.Sprintf("Cannot locate the directory name at %s where the version %s is installed", baseDir, cmdOptions.Version))
+	}
+
 	return ""
 }
 
@@ -226,9 +258,9 @@ func contentExtractor(contents []byte, src string, vars []string) bytes.Buffer {
 }
 
 // Check if the binaries exits and unzip the binaries.
-func getBinaryFile(version string) string {
+func getBinaryFile(version string) (string, bool) {
 	Debugf("Finding and unziping the binaries for the version %s", version)
-	return unzip(fmt.Sprintf("*%s*", version))
+	return locateAndExtractPackage(fmt.Sprintf("*%s*", version))
 }
 
 // Remove blank lines from the contentExtractor
@@ -300,4 +332,13 @@ func isThisGPDB6xAndAbove() bool {
 	} else {
 		return false
 	}
+}
+
+// Check if the Os executable exists
+func isCommandAvailable(name string) bool {
+	cmd := exec.Command("command", name, "-V")
+	if err := cmd.Run(); err != nil {
+		Fatalf("%s executable is not installed on this box, please run 'yum install -y %[1]s to install it'", name, name)
+	}
+	return true
 }

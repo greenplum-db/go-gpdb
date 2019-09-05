@@ -12,6 +12,7 @@ type Installation struct {
 	SegInstallHostLocation     string
 	BinaryInstallationLocation string
 	BinaryOrRpm                string
+	RpmFileName                string
 	GpInitSystemConfigLocation string
 	PortFileName               string
 	EnvFile                    string

@@ -1,12 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
 )
-
 
 // Precheck before installing GPDB
 func (i *Installation) preGPDBChecks() {
@@ -82,8 +83,30 @@ func dirValidator() error {
 // Installing the greenplum binaries
 func (i *Installation) installProduct() {
 	// Installing the binaries.
-	binFile := getBinaryFile(cmdOptions.Version)
+	binFile, isItBinaryFile := getBinaryFile(cmdOptions.Version)
 
+	// Is this a binary or rpm file
+	if isItBinaryFile {
+		// Located a binary file
+		i.binaryFileLocated(binFile)
+		i.BinaryOrRpm = "binary"
+	} else {
+		// Located a rpm file
+		i.rpmFileLocated(binFile)
+		i.BinaryOrRpm = "rpm"
+		i.RpmFileName = binFile
+	}
+
+	// Now source the environment if installation went fine
+	err := sourceGPDBPath(i.BinaryInstallationLocation)
+	if err != nil {
+		Fatalf("Failed to set the environment variable while sourcing the file")
+	}
+
+}
+
+// We have located a binary file
+func (i *Installation) binaryFileLocated(binFile string) {
 	// Location and name of the binaries
 	Infof("Using the bin file to install the GPDB Product: %s", binFile)
 	i.BinaryInstallationLocation = "/usr/local/greenplum-db-" + cmdOptions.Version
@@ -94,12 +117,17 @@ func (i *Installation) installProduct() {
 	if err != nil {
 		Fatalf("Failed in installing the binaries, err: %v", err)
 	}
+}
 
-	// Now source the environment if installation went fine
-	err = sourceGPDBPath(i.BinaryInstallationLocation)
-	if err != nil {
-		Fatalf("Failed to set the environment variable while sourcing the file")
-	}
+// Got a rpm file
+func (i *Installation) rpmFileLocated(binFile string) {
+	Infof("Using the rpm file to install the GPDB Product: %s, this might take several minutes....", binFile)
+
+	// Execute the command to install the rpm
+	executeOsCommand("sudo", "yum", "install", binFile, "-y", "-q")
+
+	// Find the directory where the rpm was installed
+	i.BinaryInstallationLocation = locateGreenplumInstallationDirectory()
 }
 
 // Check if the provided hostnames are valid
@@ -120,7 +148,11 @@ func (i *Installation) setUpHost() {
 
 	// If this is a multi installation then install the software on all the segment host
 	if i.SingleORMulti == "multi" {
-		i.runSegInstall()
+		if i.BinaryOrRpm == "rpm" {
+			i.rpmInstallOnAllSegmentHost()
+		} else {
+			i.runSegInstall()
+		}
 	}
 }
 
@@ -129,7 +161,7 @@ func (i *Installation) isHostReachable() {
 	// Get all the hostname from the hostfile and check if the host if reachable
 	var saveReachableHost []string
 	var segmentHost []string
-	for _, host := range strings.Split(string(readFile(i.HostFileLocation)), "\n"){
+	for _, host := range strings.Split(string(readFile(i.HostFileLocation)), "\n") {
 		if host != "" && checkHostReachability(fmt.Sprintf("%s:22", host), true) {
 			Debugf("The host %s is reachable", host)
 			// Save all the host that is reachable
@@ -158,7 +190,7 @@ func (i *Installation) isHostReachable() {
 	// Check if we have equal number of hosts
 	if i.SingleORMulti == "multi" && len(segmentHost)%2 == 1 { // if its multi and we have odd number of host, then we can't create mirror
 		Fatalf("There is odd number of segment host, installation cannot continue")
-	} else if i.SingleORMulti == "multi" &&  len(segmentHost) == 0 {  // if multi and no segment host then we can't continue
+	} else if i.SingleORMulti == "multi" && len(segmentHost) == 0 { // if multi and no segment host then we can't continue
 		Fatalf("No segment host found, cannot continue")
 	}
 
@@ -166,9 +198,9 @@ func (i *Installation) isHostReachable() {
 	i.hostfileCreator(saveReachableHost, segmentHost)
 }
 
-
 // Generate hostname file based on installation.
 func (i *Installation) hostfileCreator(saveReachableHost, segmentHost []string) {
+	Debug("Creating hostfile")
 	// Save the working host on a separate file
 	i.WorkingHostFileLocation = Config.CORE.TEMPDIR + "hostfile"
 	deleteFile(i.WorkingHostFileLocation)
@@ -191,16 +223,85 @@ func (i *Installation) hostfileCreator(saveReachableHost, segmentHost []string) 
 // Run keyless access to the server
 func (i *Installation) executeGpsshExkey() {
 	Infof("Running gpssh-exkeys to enable keyless access on this server")
-	// When running unit test pass the password as variable
+
+	if isThisGPDB6xAndAbove() {
+		// GPDB 6 has changed the way we generate ssh key, so we now use the newer way
+		// to initialize the ssh key and then use gpssh-exkeys to exchange to all host
+		i.generatePasswordLessKeys()
+	}
+
+	// Generate
 	executeOsCommand(fmt.Sprintf("%s/bin/gpssh-exkeys", os.Getenv("GPHOME")), "-f", i.WorkingHostFileLocation)
+
 }
 
+// Create password ssh key
+func (i *Installation) generatePasswordLessKeys() {
+	Debug("Creating passwordless ssh keys")
+
+	// Create the ssh-keygen
+	sshKeyGenFile := Config.CORE.TEMPDIR + "init_ssh_keygen.sh"
+	buildExecutableBashScript(sshKeyGenFile, "/bin/sh", []string{
+		"ssh-keygen -b 2048 -t rsa -q -N '' -f /home/gpadmin/.ssh/id_rsa",
+		"y",
+		"EOF",
+	})
+
+	// Now run ssh-copy-id for all the host
+	// Check if the sshpass is installed on the OS
+	if isCommandAvailable("sshpass") {
+		i.setupSshCopyID()
+	}
+}
+
+// Now generate ssh copy for all the segment host
+func (i *Installation) setupSshCopyID() {
+	Infof("Setting up the ssh Copy ID for all the host(s)")
+	file, err := os.Open(i.HostFileLocation)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		host := scanner.Text()
+		sshCopyIDFileName := Config.CORE.TEMPDIR + "ssh_copy_id.sh"
+		generateBashFileAndExecuteTheBashFile(sshCopyIDFileName, "/bin/sh", []string{
+			fmt.Sprintf("SSHPASS=%s sshpass -e ssh-copy-id %s &> /dev/null", Config.INSTALL.MASTERPASS, host),
+		})
+	}
+
+	if err := scanner.Err(); err != nil {
+		Fatalf("Error in reading the file %s, err: %v", i.HostFileLocation, err)
+	}
+}
 
 // Run the gpseginstall on all host
 func (i *Installation) runSegInstall() {
 	Infof("Running seg install to install the software on all the host")
 	executeOsCommand(fmt.Sprintf("%s/bin/gpseginstall", os.Getenv("GPHOME")), "-f", i.SegInstallHostLocation)
 	i.createSoftLink()
+}
+
+// Run yum install on all the segment host to install the GPDB software
+func (i *Installation) rpmInstallOnAllSegmentHost() {
+	Infof("Running rpm install to install the software on all the segment host, this might take several minutes....")
+	gpsshExecutable := fmt.Sprintf("%s/bin/gpssh", os.Getenv("GPHOME"))
+	gpscpExecutable := fmt.Sprintf("%s/bin/gpscp", os.Getenv("GPHOME"))
+	destinationFileName := fmt.Sprintf("/tmp/gpdb-%s.rpm", cmdOptions.Version)
+
+	// Copy the rpm to all the segment host
+	gpscpFilename := Config.CORE.TEMPDIR + "gpscp_gpdb_rpm.sh"
+	generateBashFileAndExecuteTheBashFile(gpscpFilename, "/bin/sh", []string{
+		fmt.Sprintf("%s -f %s %s =:%s", gpscpExecutable, i.SegInstallHostLocation, i.RpmFileName, destinationFileName),
+	})
+
+	// Now run the yum install on all the segments
+	gpsshFilename := Config.CORE.TEMPDIR + "gpssh_install_gpdb_rpm.sh"
+	buildExecutableBashScript(gpsshFilename, "/bin/sh", []string{
+		fmt.Sprintf("%s -f %s \"sudo yum install -q -y %s\" &> /dev/null", gpsshExecutable, i.SegInstallHostLocation, destinationFileName),
+	})
 }
 
 // On the newer version of the GPDB they need the soft link for
@@ -244,23 +345,23 @@ func sourceGPDBPath(binLoc string) error {
 	if err != nil {
 		return err
 	}
-	err = os.Setenv("PYTHONPATH", os.Getenv("GPHOME") + "/lib/python")
+	err = os.Setenv("PYTHONPATH", os.Getenv("GPHOME")+"/lib/python")
 	if err != nil {
 		return err
 	}
-	err = os.Setenv("PYTHONHOME", os.Getenv("GPHOME") + "/ext/python")
+	err = os.Setenv("PYTHONHOME", os.Getenv("GPHOME")+"/ext/python")
 	if err != nil {
 		return err
 	}
-	err = os.Setenv("PATH", os.Getenv("GPHOME") + "/bin:" + os.Getenv("PYTHONHOME") + "/bin:" + os.Getenv("PATH"))
+	err = os.Setenv("PATH", os.Getenv("GPHOME")+"/bin:"+os.Getenv("PYTHONHOME")+"/bin:"+os.Getenv("PATH"))
 	if err != nil {
 		return err
 	}
-	err = os.Setenv("LD_LIBRARY_PATH", os.Getenv("GPHOME") + "/lib:" + os.Getenv("PYTHONHOME")+ "/lib:" + os.Getenv("LD_LIBRARY_PATH"))
+	err = os.Setenv("LD_LIBRARY_PATH", os.Getenv("GPHOME")+"/lib:"+os.Getenv("PYTHONHOME")+"/lib:"+os.Getenv("LD_LIBRARY_PATH"))
 	if err != nil {
 		return err
 	}
-	err = os.Setenv("OPENSSL_CONF", os.Getenv("GPHOME") + "/etc/openssl.cnf")
+	err = os.Setenv("OPENSSL_CONF", os.Getenv("GPHOME")+"/etc/openssl.cnf")
 	if err != nil {
 		return err
 	}

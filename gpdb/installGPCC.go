@@ -92,7 +92,7 @@ func isThis4x() bool {
 // Install GPCC 4.x
 func (i *Installation) installGPCC4xAndAbove() {
 	// unzip the binaries
-	i.GPCC.GPCCBinaryLoc = unzip(fmt.Sprintf("*%s*", cmdOptions.CCVersion))
+	i.GPCC.GPCCBinaryLoc, _ = locateAndExtractPackage(fmt.Sprintf("*%s*.zip", cmdOptions.CCVersion))
 
 	// Install the Gpperfmon database
 	i.installGpperfmon()
@@ -238,7 +238,7 @@ func (i *Installation) installGPCCBinaries4x() {
 // Installing gpcc instance < 4.x
 func (i *Installation) installGPCCBinariesBelow4x() {
 	Infof("Installing gpcc binaries for the cc version: %s", cmdOptions.CCVersion)
-	binFile := getBinaryFile(cmdOptions.CCVersion)
+	binFile, _ := getBinaryFile(cmdOptions.CCVersion)
 	i.GPCC.GpPerfmonHome = fmt.Sprintf("/usr/local/greenplum-cc-web-dbv-%s-ccv-%s", cmdOptions.Version, cmdOptions.CCVersion)
 	var scriptOption = []string{"yes", i.GPCC.GpPerfmonHome, "yes", "yes"}
 	err := executeBinaries(binFile, "install_software.sh", scriptOption)
