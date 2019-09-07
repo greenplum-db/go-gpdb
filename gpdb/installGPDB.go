@@ -229,23 +229,22 @@ func (i *Installation) executeGpsshExkey() {
 		// to initialize the ssh key and then use gpssh-exkeys to exchange to all host
 		i.generatePasswordLessKeys()
 	}
-
-	// Generate
+	// Exchange the keys b/w host
 	executeOsCommand(fmt.Sprintf("%s/bin/gpssh-exkeys", os.Getenv("GPHOME")), "-f", i.WorkingHostFileLocation)
-
 }
 
 // Create password ssh key
 func (i *Installation) generatePasswordLessKeys() {
 	Debug("Creating passwordless ssh keys")
 
-	// Create the ssh-keygen
+	// Create the ssh-keygen if there doesn't exists one
+	pubFile := fmt.Sprintf("%s/.ssh/id_rsa", os.Getenv("HOME"))
 	sshKeyGenFile := Config.CORE.TEMPDIR + "init_ssh_keygen.sh"
-	buildExecutableBashScript(sshKeyGenFile, "/bin/sh", []string{
-		"ssh-keygen -b 2048 -t rsa -q -N '' -f /home/gpadmin/.ssh/id_rsa",
-		"y",
-		"EOF",
-	})
+	if !fileExists(pubFile) {
+		generateBashFileAndExecuteTheBashFile(sshKeyGenFile, "/bin/sh", []string{
+			fmt.Sprintf("ssh-keygen -b 2048 -t rsa -q -N '' -f %s", pubFile),
+		})
+	}
 
 	// Now run ssh-copy-id for all the host
 	// Check if the sshpass is installed on the OS
@@ -265,10 +264,11 @@ func (i *Installation) setupSshCopyID() {
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		host := scanner.Text()
+		host := removeBlanks(scanner.Text())
+		Debugf("Setting up the ssh Copy ID for all the host %s", host)
 		sshCopyIDFileName := Config.CORE.TEMPDIR + "ssh_copy_id.sh"
 		generateBashFileAndExecuteTheBashFile(sshCopyIDFileName, "/bin/sh", []string{
-			fmt.Sprintf("SSHPASS=%s sshpass -e ssh-copy-id %s &> /dev/null", Config.INSTALL.MASTERPASS, host),
+			fmt.Sprintf("SSHPASS=%s sshpass -e ssh-copy-id %s -o StrictHostKeyChecking=no &> /dev/null", Config.INSTALL.MASTERPASS, host),
 		})
 	}
 
@@ -299,8 +299,8 @@ func (i *Installation) rpmInstallOnAllSegmentHost() {
 
 	// Now run the yum install on all the segments
 	gpsshFilename := Config.CORE.TEMPDIR + "gpssh_install_gpdb_rpm.sh"
-	buildExecutableBashScript(gpsshFilename, "/bin/sh", []string{
-		fmt.Sprintf("%s -f %s \"sudo yum install -q -y %s\" &> /dev/null", gpsshExecutable, i.SegInstallHostLocation, destinationFileName),
+	generateBashFileAndExecuteTheBashFile(gpsshFilename, "/bin/sh", []string{
+		fmt.Sprintf("%s -f %s \"sudo yum install -y %s\" &> /dev/null", gpsshExecutable, i.SegInstallHostLocation, destinationFileName),
 	})
 }
 

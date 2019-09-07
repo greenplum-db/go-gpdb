@@ -137,3 +137,11 @@ func DirSize(path string) (int64, error) {
 	})
 	return size, err
 }
+
+// Does the file exists
+func fileExists(filename string) bool {
+	if _, err := os.Stat("/path/to/whatever"); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
