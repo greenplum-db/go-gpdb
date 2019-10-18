@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -264,6 +265,32 @@ func (r *Responses) ExtractFileNamePlusSize(token string) {
 	Debugf("Product File Size: %v", r.UserRequest.ProductFileSize)
 }
 
+// Download gpdb from GitHub Releases
+func DownloadGithubRelease() {
+	fn := "greenplum-db-6.0.1-rhel7-x86_64.rpm"
+
+	// Note only 6.0.0-beta.6 and higher provide installers as part of GitHub release
+	// TODO use cmdOptions.Version
+	Infof("Downloading " + Config.DOWNLOAD.DOWNLOADDIR + fn + "...");
+
+	// Create and download the file
+	out, err := os.Create(Config.DOWNLOAD.DOWNLOADDIR + fn)
+	if err != nil {
+		Fatalf("Creation of the file %s failed, err: %v", fn, err)
+	}
+
+	response := generateHandler("GET", "https://github.com/greenplum-db/gpdb/releases/download/6.0.1/greenplum-db-6.0.1-rhel7-x86_64.rpm", "", true)
+	defer response.Body.Close()
+	defer out.Close()
+
+	_, err = io.Copy(out, response.Body)
+	if err != nil {
+		Fatalf("Error in downloading the file: %v", err)
+	}
+
+	Infof("Downloaded " + Config.DOWNLOAD.DOWNLOADDIR + fn)
+}
+
 // Download the the product from PivNet
 func Download() {
 
@@ -277,26 +304,30 @@ func Download() {
 
 	Info("Starting the program to download the product")
 
-	// Get the authentication token
-	token := getToken()
-
-	// Initialize the struct
-	r := new(Responses)
-
-	// Extract all the product list / releases information
-	r.extractProduct(token)
-
-	// Accept the EULA
-	Infof("Accepting the EULA (End User License Agreement): %s", r.EULALink)
-	post(r.EULALink, token)
-
-	// All hard work is now done, lets download the version
-	Infof("Starting downloading of file: %s", r.UserRequest.ProductFileName)
-	if r.UserRequest.DownloadURL != "" {
-		downloadProduct(r.UserRequest.DownloadURL, token, *r)
-		Infof("Downloaded file available at: %s", Config.DOWNLOAD.DOWNLOADDIR+r.UserRequest.ProductFileName)
+	if Config.DOWNLOAD.APITOKEN == "<GITHUB RELEASE>" {
+		DownloadGithubRelease()
 	} else {
-		Fatalf("download URL is blank, cannot download the product")
+		// Get the authentication token
+		token := getToken()
+
+		// Initialize the struct
+		r := new(Responses)
+
+		// Extract all the product list / releases information
+		r.extractProduct(token)
+
+		// Accept the EULA
+		Infof("Accepting the EULA (End User License Agreement): %s", r.EULALink)
+		post(r.EULALink, token)
+
+		// All hard work is now done, lets download the version
+		Infof("Starting downloading of file: %s", r.UserRequest.ProductFileName)
+		if r.UserRequest.DownloadURL != "" {
+			downloadProduct(r.UserRequest.DownloadURL, token, *r)
+			Infof("Downloaded file available at: %s", Config.DOWNLOAD.DOWNLOADDIR+r.UserRequest.ProductFileName)
+		} else {
+			Fatalf("download URL is blank, cannot download the product")
+		}
 	}
 
 	// If the install after download flag is set then run the installer script

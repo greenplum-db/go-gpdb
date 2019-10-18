@@ -5,10 +5,10 @@ CORE:
   OS: "linux"                                             # OS Platform
   ARCH: "amd64"                                           # OS Architecture
   GO_BUILD: "1.12.9"                                      # Version of GO the Application will use to Build (eg. 1.7.4)
-  BASE_DIR: /usr/local/src                                # Location Where [APPLICATION_NAME] Files Will Be Created
+  BASE_DIR: /home/gpadmin                                 # Location Where [APPLICATION_NAME] Files Will Be Created
   TEMP_DIR: /temp/                                        # Temporary Folder Inside [APPLICATION_NAME] for Hostfile and Init
 DOWNLOAD:
-  API_TOKEN: <API TOKEN>           						  # You can get it after login to PivNet
+  API_TOKEN: <GITHUB RELEASE>                             # You can get it after login to PivNet
   DOWNLOAD_DIR: /download/                                # Folder Inside [APPLICATION_NAME]: stores binares
 INSTALL:
   ENV_DIR: /env/                                          # Folder Inside [APPLICATION_NAME]: stores source files
@@ -17,7 +17,7 @@ INSTALL:
   MASTER_USER: gpadmin                                    # User that will install GPDB s/w usually "gpadmin"
   MASTER_PASS: changeme                                   # Password of MASTER_USER user
   GPMON_PASS: changeme                                    # Password for GPMON
-  MASTER_DATA_DIRECTORY: /data/master/                    # Master Data Directory
-  SEGMENT_DATA_DIRECTORY: /data/primary/                  # Segment Data Directory
-  MIRROR_DATA_DIRECTORY: /data/mirror/                    # Mirror Data Directory
+  MASTER_DATA_DIRECTORY: /home/gpadmin/data/master/       # Master Data Directory
+  SEGMENT_DATA_DIRECTORY: /home/gpadmin/data/primary/     # Segment Data Directory
+  MIRROR_DATA_DIRECTORY: /home/gpadmin/data/mirror/       # Mirror Data Directory
   TOTAL_SEGMENT: 2                                        # Total Segments to be created
