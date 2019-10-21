@@ -310,7 +310,7 @@ func isValidVersionFormat(version string) bool {
 }
 
 // Extract the version from the name
-func extractVersionNumbeer(filename string) string {
+func extractVersionNumber(filename string) string {
 	r, _ := regexp.Compile(`(-[0-9]+.[0-9]+.[0-9]+-|-[0-9]+.[0-9]+.[0-9]+.[0-9]+-)`)
 	version := r.FindString(filename)
 	return strings.Replace(version, "-", "", -1)

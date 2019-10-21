@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // All the PivNet Url's & Constants
@@ -14,6 +15,7 @@ const (
 	RefreshToken = EndPoint + "/api/v2/authentication/access_tokens"
 	Products     = EndPoint + "/api/v2/products"
 	ProductSlug  = "pivotal-gpdb" // we only care about this slug rest we ignore
+	OpenSourceReleaseAPIEndpoint = "https://api.github.com/repos/greenplum-db/gpdb/releases"
 )
 
 var (
@@ -26,6 +28,8 @@ var (
 	rx_gpdb_for_6_n_above = `(greenplum-db-(\d+\.)(\d+\.)(\d+)?(\.\d)-rhel5-x86_64.zip|Greenplum Database ` +
 		`(\d+\.)(\d+\.)(\d+)?(\-beta)?(\.\d)?( (Binary Installer|Installer))?( |  )for ` +
 		`((Red Hat Enterprise|RedHat Enterprise|RedHat Entrerprise) Linux|RHEL).*?(7))`
+	// Open Source release
+	rx_open_source_gpdb = `greenplum-(db|database)-(\d+\.)(\d+\.)(\d+)?(\-beta)?(\.\d)?-rhel7-x86_64.rpm`
 )
 
 // Struct to where all the API response will be stored
@@ -165,6 +169,79 @@ type Responses struct {
 	UserRequest  userChoice
 }
 
+type GithubReleases []struct {
+	URL             string `json:"url"`
+	AssetsURL       string `json:"assets_url"`
+	UploadURL       string `json:"upload_url"`
+	HTMLURL         string `json:"html_url"`
+	ID              int    `json:"id"`
+	NodeID          string `json:"node_id"`
+	TagName         string `json:"tag_name"`
+	TargetCommitish string `json:"target_commitish"`
+	Name            string `json:"name"`
+	Draft           bool   `json:"draft"`
+	Author          struct {
+		Login             string `json:"login"`
+		ID                int    `json:"id"`
+		NodeID            string `json:"node_id"`
+		AvatarURL         string `json:"avatar_url"`
+		GravatarID        string `json:"gravatar_id"`
+		URL               string `json:"url"`
+		HTMLURL           string `json:"html_url"`
+		FollowersURL      string `json:"followers_url"`
+		FollowingURL      string `json:"following_url"`
+		GistsURL          string `json:"gists_url"`
+		StarredURL        string `json:"starred_url"`
+		SubscriptionsURL  string `json:"subscriptions_url"`
+		OrganizationsURL  string `json:"organizations_url"`
+		ReposURL          string `json:"repos_url"`
+		EventsURL         string `json:"events_url"`
+		ReceivedEventsURL string `json:"received_events_url"`
+		Type              string `json:"type"`
+		SiteAdmin         bool   `json:"site_admin"`
+	} `json:"author"`
+	Prerelease  bool      `json:"prerelease"`
+	CreatedAt   time.Time `json:"created_at"`
+	PublishedAt time.Time `json:"published_at"`
+	Assets      []struct {
+		URL      string `json:"url"`
+		ID       int    `json:"id"`
+		NodeID   string `json:"node_id"`
+		Name     string `json:"name"`
+		Label    string `json:"label"`
+		Uploader struct {
+			Login             string `json:"login"`
+			ID                int    `json:"id"`
+			NodeID            string `json:"node_id"`
+			AvatarURL         string `json:"avatar_url"`
+			GravatarID        string `json:"gravatar_id"`
+			URL               string `json:"url"`
+			HTMLURL           string `json:"html_url"`
+			FollowersURL      string `json:"followers_url"`
+			FollowingURL      string `json:"following_url"`
+			GistsURL          string `json:"gists_url"`
+			StarredURL        string `json:"starred_url"`
+			SubscriptionsURL  string `json:"subscriptions_url"`
+			OrganizationsURL  string `json:"organizations_url"`
+			ReposURL          string `json:"repos_url"`
+			EventsURL         string `json:"events_url"`
+			ReceivedEventsURL string `json:"received_events_url"`
+			Type              string `json:"type"`
+			SiteAdmin         bool   `json:"site_admin"`
+		} `json:"uploader"`
+		ContentType        string    `json:"content_type"`
+		State              string    `json:"state"`
+		Size               int64       `json:"size"`
+		DownloadCount      int64       `json:"download_count"`
+		CreatedAt          time.Time `json:"created_at"`
+		UpdatedAt          time.Time `json:"updated_at"`
+		BrowserDownloadURL string    `json:"browser_download_url"`
+	} `json:"assets"`
+	TarballURL string `json:"tarball_url"`
+	ZipballURL string `json:"zipball_url"`
+	Body       string `json:"body"`
+}
+
 // Extract all the Pivotal Network Product from the Product API page.
 func (r *Responses) extractProduct(token string) {
 	Info("Obtaining the product ID")
@@ -264,6 +341,22 @@ func (r *Responses) ExtractFileNamePlusSize(token string) {
 	Debugf("Product File Size: %v", r.UserRequest.ProductFileSize)
 }
 
+// Extract the releases info from github
+func (g *GithubReleases) extractOpenSourceReleases() (string, string, int64) {
+	Infof("Requesting data from open source API")
+	// Get all the open source releases
+	response := get(OpenSourceReleaseAPIEndpoint, "")
+
+	// Store it on JSON
+	err := json.Unmarshal(response, &g)
+	if err != nil {
+		Fatalf("Unable to unmarshal the open source gpdb releases: %v", err)
+	}
+
+	// The filename and the download URL
+	return showOpenSourceVersionAvailable(*g)
+}
+
 // Download the the product from PivNet
 func Download() {
 
@@ -277,18 +370,35 @@ func Download() {
 
 	Info("Starting the program to download the product")
 
-	// Get the authentication token
-	token := getToken()
-
-	// Initialize the struct
+	// Initialize the struct & token
 	r := new(Responses)
+	var token string
 
-	// Extract all the product list / releases information
-	r.extractProduct(token)
+	// If its a open source release download
+	if cmdOptions.Github {
+		// No token for open source release
+		token = ""
 
-	// Accept the EULA
-	Infof("Accepting the EULA (End User License Agreement): %s", r.EULALink)
-	post(r.EULALink, token)
+		// Extract the file and download URL for the github release
+		openSourceReleases := new(GithubReleases)
+		file, downloadURL, size := openSourceReleases.extractOpenSourceReleases()
+
+		// Assign the open source file details to the download request
+		r.UserRequest.ProductFileName = file
+		r.UserRequest.DownloadURL = downloadURL
+		r.UserRequest.ProductFileSize = size
+
+	} else { // if its a official enterprise download
+		// Get the authentication token
+		token = getToken()
+
+		// Extract all the product list / releases information
+		r.extractProduct(token)
+
+		// Accept the EULA
+		Infof("Accepting the EULA (End User License Agreement): %s", r.EULALink)
+		post(r.EULALink, token)
+	}
 
 	// All hard work is now done, lets download the version
 	Infof("Starting downloading of file: %s", r.UserRequest.ProductFileName)

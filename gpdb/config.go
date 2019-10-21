@@ -63,11 +63,13 @@ func endWithSlash(path string) string {
 
 // Validate the token
 func validateToken() {
-	if IsValueEmpty(Config.DOWNLOAD.APITOKEN) || Config.DOWNLOAD.APITOKEN == "<API TOKEN>" {
+	if !cmdOptions.Github && (IsValueEmpty(Config.DOWNLOAD.APITOKEN) || Config.DOWNLOAD.APITOKEN == "<API TOKEN>") {
 		// Check if its set as environment variables
 		token := os.Getenv("UAA_API_TOKEN")
 		if token == "" { // No token set
-			Fatal("The API Token is either missing or not provided, please update the config file and try again")
+			Fatal("The API Token is either missing or not provided, please update the config file and try again" +
+				", if you don't have a pivnet account and wish to use the open source gpdb release, " +
+				"use the flag \"-g\".")
 		} else {
 			Config.DOWNLOAD.APITOKEN = token
 		}

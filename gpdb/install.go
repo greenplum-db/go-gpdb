@@ -143,5 +143,5 @@ func chooseDownloadedProducts() string {
 	totalProducts := displayDownloadedProducts("listandChoose")
 	choice := PromptChoice(len(totalProducts))
 	choosenProduct := totalProducts[choice-1]
-	return extractVersionNumbeer(choosenProduct)
+	return extractVersionNumber(choosenProduct)
 }

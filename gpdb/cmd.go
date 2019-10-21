@@ -25,6 +25,7 @@ type Command struct {
 	ListEnv   bool
 	Vars      bool
 	Always    bool
+	Github    bool
 }
 
 // Sub Command: Download
@@ -40,6 +41,12 @@ var downloadCmd = &cobra.Command{
 		if !Contains(AcceptedDownloadProduct, cmdOptions.Product) {
 			Fatalf("Invalid product option specified: %s, Accepted Options: %v", cmdOptions.Product, AcceptedDownloadProduct)
 		}
+		// If user want to download from github, then version of gpdb version 6 and above is only allowed
+		if cmdOptions.Version != "" && cmdOptions.Github {
+			if !isThisGPDB6xAndAbove() {
+				Fatalf("Open source download only works with GPDB 6.x and above")
+			}
+		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// Run download to download the binaries
@@ -52,8 +59,9 @@ func downloadFlags() {
 	downloadCmd.Flags().StringVarP(&cmdOptions.Product, "product", "p", "gpdb", "What product do you want to download? [OPTIONS: gpdb, gpcc, gpextras]")
 	downloadCmd.Flags().StringVarP(&cmdOptions.Version, "version", "v", "", "OPTIONAL: Which GPDB version software do you want to download ?")
 	downloadCmd.Flags().BoolVar(&cmdOptions.Install, "install", false, "OPTIONAL: Install after downloaded (Only works with \"gpdb\")?")
-	downloadCmd.Flags().BoolVarP(&cmdOptions.Always, "always", "a", false, "Download the product, even if its already exists")
+	downloadCmd.Flags().BoolVarP(&cmdOptions.Always, "always", "a", false, "Download the product, even if it already exists")
 	downloadCmd.Flags().BoolVarP(&cmdOptions.ListEnv, "list", "l", false, "Show all the products that was downloaded")
+	downloadCmd.Flags().BoolVarP(&cmdOptions.Github, "github", "g", false, "Download the product from open source github release (only works with gpdb 6 & above)")
 }
 
 // Sub Command: Install
