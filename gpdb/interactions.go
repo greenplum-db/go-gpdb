@@ -84,6 +84,8 @@ func (r *Responses) ShowAvailableVersion(token string) {
 	// Local storehouse
 	var ReleaseOutputMap = make(map[string]string)
 	var ReleaseVersion []string
+	var ReleaseFileOutPutMap = make(map[string]string)
+	var ReleaseSizeOutPutMap = make(map[string]int64)
 
 	// Get all the releases from the ReleaseJson
 	for _, release := range r.ReleaseList.Release {
@@ -91,14 +93,53 @@ func (r *Responses) ShowAvailableVersion(token string) {
 		ReleaseVersion = append(ReleaseVersion, release.Version)
 	}
 
+	// Get the user choice
+	_, r.UserRequest.releaseLink, _ = pickUserChoice(
+		ReleaseOutputMap, ReleaseFileOutPutMap, ReleaseVersion, ReleaseSizeOutPutMap)
+	r.UserRequest.versionChoosen = cmdOptions.Version
+
+	// Since we have now extracted the version, now get the download URL
+	r.ExtractDownloadURL(token)
+}
+
+// Extract all the tags of the open source github release
+func ShowOpenSourceAvailableVersion(g GithubReleases) (string, string, int64) {
+	Debugf("Showing all the available open source version available for download")
+
+	// Local storehouse
+	var ReleaseOutputMap = make(map[string]string)
+	var ReleaseVersion []string
+	var ReleaseFileOutPutMap = make(map[string]string)
+	var ReleaseSizeOutPutMap = make(map[string]int64)
+
+	// Regex compile for open source
+	rx, _ := regexp.Compile("(?i)" + rx_open_source_gpdb)
+
+	// Get all the releases from the ReleaseJson
+	for _, release := range g {
+		for _, asset := range release.Assets {
+			if rx.MatchString(asset.Name)  {
+				tag := release.TagName
+				ReleaseOutputMap[tag] = asset.BrowserDownloadURL
+				ReleaseFileOutPutMap[tag] = asset.Name
+				ReleaseSizeOutPutMap[tag] = asset.Size
+				ReleaseVersion = append(ReleaseVersion, release.TagName)
+			}
+		}
+	}
+	return  pickUserChoice(
+		ReleaseOutputMap, ReleaseFileOutPutMap, ReleaseVersion, ReleaseSizeOutPutMap)
+}
+
+// Pick the version from the user choice
+func pickUserChoice(ReleaseOutputMap, ReleaseFileOutPutMap map[string]string,
+	ReleaseVersion []string, ReleaseSizeOutPutMap map[string]int64) (string, string, int64){
 	// Check if the user provided version is on the list we have just extracted
 	if Contains(ReleaseVersion, cmdOptions.Version) {
-		Infof("Found the GPDB version \"%s\" on PivNet, continuing..", cmdOptions.Version)
-		r.UserRequest.releaseLink = ReleaseOutputMap[cmdOptions.Version]
-		r.UserRequest.versionChoosen = cmdOptions.Version
-
+		v := cmdOptions.Version
+		Infof("Found the GPDB version \"%s\" on PivNet, continuing..", v)
+		return ReleaseFileOutPutMap[v], ReleaseOutputMap[v], ReleaseSizeOutPutMap[v]
 	} else { // If its not on the list then fallback to interactive mode
-
 		// Print warning if the user did provide a value of the version
 		if cmdOptions.Version != "" {
 			Warnf("Unable to find the GPDB version \"%s\" on PivNet, failing back to interactive mode..", cmdOptions.Version)
@@ -117,16 +158,15 @@ func (r *Responses) ShowAvailableVersion(token string) {
 		TotalOptions := len(ReleaseVersion)
 
 		// Ask user for choice
-		users_choice := PromptChoice(TotalOptions)
+		usersChoice := PromptChoice(TotalOptions)
 
 		// Selected by the user
-		r.UserRequest.releaseLink = ReleaseOutputMap[ReleaseVersion[users_choice-1]]
-		r.UserRequest.versionChoosen = ReleaseVersion[users_choice-1]
-		cmdOptions.Version = r.UserRequest.versionChoosen
-	}
+		choice := ReleaseVersion[usersChoice-1]
+		cmdOptions.Version = choice
 
-	// Since we have now extracted the version, now get the download URL
-	r.ExtractDownloadURL(token)
+		// Return would be the filename, url, filesize
+		return ReleaseFileOutPutMap[choice], ReleaseOutputMap[choice], ReleaseSizeOutPutMap[choice]
+	}
 }
 
 // Ask user what file in that version are they interested in downloading
@@ -202,63 +242,4 @@ func (r *Responses) WhichProduct(token string) {
 
 	// We received the download URL, lets gets the size and file name of the download file.
 	r.ExtractFileNamePlusSize(token)
-}
-
-
-// Extract all the tags of the open source github release
-func showOpenSourceVersionAvailable(g GithubReleases) (string, string, int64) {
-	Debugf("Showing all the available open source version available for download")
-
-	// Local storehouse
-	var ReleaseOutputMap = make(map[string]string)
-	var ReleaseVersion []string
-	var ReleaseFileOutPutMap = make(map[string]string)
-	var ReleaseSizeOutPutMap = make(map[string]int64)
-
-	// Regex compile for open source
-	rx, _ := regexp.Compile("(?i)" + rx_open_source_gpdb)
-
-	// Get all the releases from the ReleaseJson
-	for _, release := range g {
-		for _, asset := range release.Assets {
-			if rx.MatchString(asset.Name)  {
-				tag := release.TagName
-				ReleaseOutputMap[tag] = asset.BrowserDownloadURL
-				ReleaseFileOutPutMap[tag] = asset.Name
-				ReleaseSizeOutPutMap[tag] = asset.Size
-				ReleaseVersion = append(ReleaseVersion, release.TagName)
-			}
-		}
-	}
-
-	if Contains(ReleaseVersion, cmdOptions.Version) {
-		Infof("Found the GPDB version \"%s\" on Github Release Page, continuing..", cmdOptions.Version)
-		return ReleaseFileOutPutMap[cmdOptions.Version], ReleaseOutputMap[cmdOptions.Version], ReleaseSizeOutPutMap[cmdOptions.Version]
-	} else {
-		// Print warning if the user did provide a value of the version
-		if cmdOptions.Version != "" {
-			Warnf("Unable to find the GPDB version \"%s\" on PivNet, failing back to interactive mode..", cmdOptions.Version)
-		}
-
-		// Sort all the keys
-		var data = []string{"Index | Product Version",
-			"---------| ------------------------",
-		}
-		for index, version := range ReleaseVersion {
-			data = append(data, strconv.Itoa(index+1)+"|"+version)
-		}
-		printOnScreen("Please select the version from the drop down list", data)
-
-		// Total accepted values that user can enter
-		TotalOptions := len(ReleaseVersion)
-
-		// Ask user for choice
-		users_choice := PromptChoice(TotalOptions)
-
-		// Selected by the user
-		choice := ReleaseVersion[users_choice-1]
-		cmdOptions.Version = choice
-		return ReleaseFileOutPutMap[choice], ReleaseOutputMap[choice], ReleaseSizeOutPutMap[choice]
-	}
-	return "", "", 0
 }

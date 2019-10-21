@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -140,17 +139,8 @@ func downloadProduct(url, token string, r Responses) {
 	// Only would work with gpdb, for other flags like gpcc / gpextra this won't work
 	// since we don't store or request for any version information
 	if cmdOptions.Product == "gpdb" {
-		filePath, _ := FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf("*%s*.zip", cmdOptions.Version))
-		if len(filePath) > 0 && !cmdOptions.Always {
-			Warnf("ZIP File %s found, skipping download...", filePath[0])
-			Warn("To force re-download of the file, use -a flag")
-			return
-		}
-
-		filePath, _ = FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf("*%s*.rpm", cmdOptions.Version))
-		if len(filePath) > 0 && !cmdOptions.Always {
-			Warnf("RPM File %s found, skipping download...", filePath[0])
-			Warn("To force re-download of the file, use -a flag")
+		if DidWeDownloadThisVersionBefore("*%s*.zip", "ZIP File") ||
+			DidWeDownloadThisVersionBefore("*%s*.rpm", "RPM File") {
 			return
 		}
 	}

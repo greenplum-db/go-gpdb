@@ -342,3 +342,14 @@ func isCommandAvailable(name string) bool {
 	}
 	return true
 }
+
+// Check if the file exists
+func DidWeDownloadThisVersionBefore(pattern, mesg string) bool {
+	filePath, _ := FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf(pattern, cmdOptions.Version))
+	if len(filePath) > 0 && !cmdOptions.Always {
+		Warnf("%s %s found, skipping download...", mesg, filePath[0])
+		Warn("To force re-download of the file, use -a flag")
+		return true
+	}
+	return false
+}

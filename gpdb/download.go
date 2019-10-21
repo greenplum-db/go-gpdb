@@ -354,7 +354,7 @@ func (g *GithubReleases) extractOpenSourceReleases() (string, string, int64) {
 	}
 
 	// The filename and the download URL
-	return showOpenSourceVersionAvailable(*g)
+	return ShowOpenSourceAvailableVersion(*g)
 }
 
 // Download the the product from PivNet
@@ -372,6 +372,7 @@ func Download() {
 
 	// Initialize the struct & token
 	r := new(Responses)
+	openSourceReleases := new(GithubReleases)
 	var token string
 
 	// If its a open source release download
@@ -380,7 +381,6 @@ func Download() {
 		token = ""
 
 		// Extract the file and download URL for the github release
-		openSourceReleases := new(GithubReleases)
 		file, downloadURL, size := openSourceReleases.extractOpenSourceReleases()
 
 		// Assign the open source file details to the download request
