@@ -11,10 +11,10 @@ import (
 
 // All the PivNet Url's & Constants
 const (
-	EndPoint     = "https://network.pivotal.io"
-	RefreshToken = EndPoint + "/api/v2/authentication/access_tokens"
-	Products     = EndPoint + "/api/v2/products"
-	ProductSlug  = "pivotal-gpdb" // we only care about this slug rest we ignore
+	EndPoint                     = "https://network.pivotal.io"
+	RefreshToken                 = EndPoint + "/api/v2/authentication/access_tokens"
+	Products                     = EndPoint + "/api/v2/products"
+	ProductSlug                  = "pivotal-gpdb" // we only care about this slug rest we ignore
 	OpenSourceReleaseAPIEndpoint = "https://api.github.com/repos/greenplum-db/gpdb/releases"
 )
 
@@ -231,8 +231,8 @@ type GithubReleases []struct {
 		} `json:"uploader"`
 		ContentType        string    `json:"content_type"`
 		State              string    `json:"state"`
-		Size               int64       `json:"size"`
-		DownloadCount      int64       `json:"download_count"`
+		Size               int64     `json:"size"`
+		DownloadCount      int64     `json:"download_count"`
 		CreatedAt          time.Time `json:"created_at"`
 		UpdatedAt          time.Time `json:"updated_at"`
 		BrowserDownloadURL string    `json:"browser_download_url"`
