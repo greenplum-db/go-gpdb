@@ -69,7 +69,7 @@ func validateToken() {
 		if token == "" { // No token set
 			Fatal("The API Token is either missing or not provided, please update the config file and try again" +
 				", if you don't have a pivnet account and wish to use the open source gpdb release, " +
-				"use the flag \"-g\".")
+				"please use the\"--github\" flag.")
 		} else {
 			Config.DOWNLOAD.APITOKEN = token
 		}
