@@ -141,8 +141,14 @@ func pickUserChoice(ReleaseOutputMap, ReleaseFileOutPutMap map[string]string,
 		return ReleaseFileOutPutMap[v], ReleaseOutputMap[v], ReleaseSizeOutPutMap[v]
 	} else { // If its not on the list then fallback to interactive mode
 		// Print warning if the user did provide a value of the version
+		downloadFromWhere := "PivNet"
+		if cmdOptions.Github {
+			downloadFromWhere = "Github"
+		}
+		
 		if cmdOptions.Version != "" {
-			Warnf("Unable to find the GPDB version \"%s\" on PivNet, failing back to interactive mode..", cmdOptions.Version)
+			Warnf("Unable to find the GPDB version \"%s\" on %s, failing back to interactive mode..",
+				cmdOptions.Version, downloadFromWhere)
 		}
 
 		// Sort all the keys
