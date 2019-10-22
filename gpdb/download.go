@@ -381,7 +381,7 @@ func Download() {
 		token = ""
 
 		// Extract the file and download URL for the github release
-		file, downloadURL, size := openSourceReleases.extractOpenSourceReleases()
+		file, downloadURL, size := openSourceReleases.fetchOpenSourceReleases()
 
 		// Assign the open source file details to the download request
 		r.UserRequest.ProductFileName = file
