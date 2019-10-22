@@ -342,7 +342,7 @@ func (r *Responses) ExtractFileNamePlusSize(token string) {
 }
 
 // Extract the releases info from github
-func (g *GithubReleases) extractOpenSourceReleases() (string, string, int64) {
+func (g *GithubReleases) fetchOpenSourceReleases() (string, string, int64) {
 	Infof("Requesting data from open source API")
 	// Get all the open source releases
 	response := get(OpenSourceReleaseAPIEndpoint, "")
