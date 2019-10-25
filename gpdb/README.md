@@ -16,21 +16,14 @@ Table of Contents
 
 # Introduction
 
-Gpdb CLI helps to download, install, remove and manage the software of GPDB / GPCC, either as single node installation or multi node installation.
-
-# Prerequisite
-
-+ You will need to first provision the vagrant VM, please follow the instruction as described on the [datalab documentation](https://github.com/pivotal-gss/go-gpdb/tree/master/datalab#create) to provision a vagrant VM.
-+ Make sure your provisioned can access the internet.
+The gpdb CLI helps to download, install, remove, and manage GPDB / GPCC installation, in both single and multi node installations.
 
 # Installation
 
-+ The gpdb cli is automatically downloaded and installed on the provisioned VM, there is no additional step needed.
-+ Connect to the provisioned VM using [datalab ssh](https://github.com/pivotal-gss/go-gpdb/tree/master/datalab#ssh) and start using the gpdb cli using the [examples](#example) mentioned below
++ To provision a vagrant VM with go-gpdb pre-installed, please follow the instructions in the [datalab documentation](../datalab#create). Make sure it can access the internet. Connect to the provisioned VM using [datalab ssh](../datalab#ssh) and start using the gpdb cli using the [examples](#example) mentioned below.
++ If configuring your own VM, please follow the instructions in [INSTALL.md](INSTALL.md).
 
 # Usage 
-
-The usage of gpdb CLI
 
 ```
 Usage:
@@ -56,10 +49,16 @@ Use "gpdb [command] --help" for more information about a command.
 
 ### Download
 
-+ To download product interactively
++ To download product interactively from PivNet
     ```
     gpdb download
     ```
+
++ To download gpdb interactively from GitHub
+    ```
+    gpdb download
+    ```
+
 + To download a specific version
     ```
     gpdb download -v <GPDB VERSION>
@@ -110,11 +109,11 @@ Use "gpdb [command] --help" for more information about a command.
 
 ### Env
 
-+ To list all environment that has been installed.
++ To list all environments that have been installed.
     ```
     gpdb env -l
     ```
-+ To list all environment that has been installed and choose env in interactive mode.
++ To list all environments that have been installed and choose env in interactive mode.
     ```
     gpdb env
     ```
