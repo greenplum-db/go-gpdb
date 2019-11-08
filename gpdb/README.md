@@ -56,7 +56,7 @@ Use "gpdb [command] --help" for more information about a command.
 
 + To download gpdb interactively from GitHub
     ```
-    gpdb download
+    gpdb download --github
     ```
 
 + To download a specific version
