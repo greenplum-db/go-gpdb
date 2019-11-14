@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -78,6 +79,7 @@ func (i *Installation) updateEnvFile() error {
 		"export GPCCPORT=" + i.GPCC.InstancePort,
 		"export GPCCVersion=" + cmdOptions.CCVersion,
 		"export GPCC_UNINSTALL_LOC=" + i.GPCC.UninstallFile,
+		"export GPCC_HOME=/usr/local/greenplum-cc-web-" + cmdOptions.CCVersion,
 	})
 
 	return nil
@@ -204,4 +206,7 @@ func env() {
 // Display the env content on the screen
 func displayEnvFileToSource(file string) {
 	printOnScreen("Source the environment file to set the environment", []string{"source " + file})
+	cmd := exec.Command("bash", "source "+file)
+	Infof("source " + file)
+	cmd.Run()
 }

@@ -448,7 +448,7 @@ func displayDownloadedProducts(whichType string) []string {
 				sizeInMB(sizeOfFile), v))
 		} else { // Install command called this, so show only the DB related files
 			if strings.HasPrefix(downloadedProduct, "greenplum-db") &&
-				strings.HasSuffix(downloadedProduct, "zip") {
+				strings.HasSuffix(downloadedProduct, "zip") || strings.HasSuffix(downloadedProduct, "rpm") {
 				index = index + 1
 				output = append(output, fmt.Sprintf("%d|%s|%d|%s", index, downloadedProduct,
 					sizeInMB(sizeOfFile), v))

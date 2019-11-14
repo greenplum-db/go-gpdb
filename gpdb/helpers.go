@@ -3,16 +3,17 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/benhoyt/goawk/interp"
-	"github.com/benhoyt/goawk/parser"
-	"github.com/mholt/archiver"
-	"github.com/ryanuber/columnize"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/benhoyt/goawk/interp"
+	"github.com/benhoyt/goawk/parser"
+	"github.com/mholt/archiver"
+	"github.com/ryanuber/columnize"
 )
 
 // Function that checks if the string is available on a array.
@@ -218,7 +219,7 @@ func obtainExecutableFilename(search string) string {
 	} else if cmdOptions.Product == "gpcc" { // GPCC binaries
 		if isThis4x() { // newer directory
 			// Get the binary file name
-			binFile, _ := FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf("%[1]s/%[1]s", search))
+			binFile, _ := FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf("%[1]s", search))
 			if len(binFile) > 0 {
 				return binFile[0]
 			} else {
