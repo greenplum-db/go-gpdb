@@ -82,12 +82,6 @@ func (i *Installation) installGPCCProduct() {
 // Is it a 4.x to <4.x version
 func isThis4x() bool {
 	v := extractVersion(cmdOptions.CCVersion)
-	// var v float64
-	// if extractVersion(cmdOptions.CCVersion) == 0 {
-	// 	v = extractVersion(cmdOptions.CCVersion)
-	// } else {
-	// 	v = extractVersion(os.Getenv("GPCCVersion"))
-	// }
 	if v >= 4.0 { // newer GPCC code
 		return true
 	} else { // legacy GPCC code
