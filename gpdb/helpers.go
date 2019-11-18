@@ -133,7 +133,7 @@ func removeOldBinFiles(search string) {
 		removeFiles(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf("*%s*.bin*", cmdOptions.CCVersion))
 		removeFiles(Config.DOWNLOAD.DOWNLOADDIR, "*README_INSTALL*")
 	} else { // GPCC 4.x has folder into folders
-		allfiles, _ := FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf("%s", search))
+		allfiles, _ := FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf("%s", removeZip(search)))
 		for _, v := range allfiles {
 			if !strings.HasSuffix(v, ".zip") {
 				deleteFile(v)
@@ -149,7 +149,7 @@ func locateAndExtractPackage(search string) (string, bool) {
 
 	// Did we find any
 	if len(allfiles) > 0 {
-		binary := allfiles[0]
+		binary := detectFileName(allfiles)
 		if strings.HasSuffix(binary, ".rpm") {
 			return locatedRpmFile(search, binary)
 		} else {
@@ -165,6 +165,29 @@ func locateAndExtractPackage(search string) (string, bool) {
 		}
 	}
 	return "", true
+}
+
+// Detect the file
+// Starting from GPDB 6, the filename or GPDB and GPCC remains the
+// same and breaks the GPCC installation, so we detect it here and
+// select the appropriate file
+func detectFileName(files []string) string {
+	if len(files) == 1 {
+		return files[0]
+	} else {
+		for _, file := range files {
+			if cmdOptions.Product == "gpdb" {
+				if !strings.Contains(file, "cc-web") {
+					return file
+				}
+			} else {
+				if strings.Contains(file, "cc-web") {
+					return file
+				}
+			}
+		}
+	}
+	return ""
 }
 
 // located a binary file
@@ -193,7 +216,7 @@ func locateGreenplumInstallationDirectory() string {
 	folders, _ := FilterDirsGlob(baseDir, fmt.Sprintf("*%s*", cmdOptions.Version))
 	if len(folders) > 0 {
 		// We found one
-		return folders[0]
+		return detectFileName(folders)
 	} else {
 		Fatalf(fmt.Sprintf("Cannot locate the directory name at %s where the version %s is installed", baseDir, cmdOptions.Version))
 	}
@@ -212,6 +235,10 @@ func findBinaryFile(search, version string) string {
 	return ""
 }
 
+func removeZip(search string) string {
+	return strings.Replace(search, ".zip", "", -1)
+}
+
 // Get the execute file
 func obtainExecutableFilename(search string) string {
 	if cmdOptions.Product == "gpdb" { // Get the binary file name
@@ -219,7 +246,7 @@ func obtainExecutableFilename(search string) string {
 	} else if cmdOptions.Product == "gpcc" { // GPCC binaries
 		if isThis4x() { // newer directory
 			// Get the binary file name
-			binFile, _ := FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf("%[1]s", search))
+			binFile, _ := FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf("%[1]s/%[1]s", removeZip(search)))
 			if len(binFile) > 0 {
 				return binFile[0]
 			} else {
@@ -348,9 +375,11 @@ func isCommandAvailable(name string) bool {
 func DidWeDownloadThisVersionBefore(pattern, mesg string) bool {
 	filePath, _ := FilterDirsGlob(Config.DOWNLOAD.DOWNLOADDIR, fmt.Sprintf(pattern, cmdOptions.Version))
 	if len(filePath) > 0 && !cmdOptions.Always {
-		Warnf("%s %s found, skipping download...", mesg, filePath[0])
-		Warn("To force re-download of the file, use -a flag")
-		return true
+		if !strings.Contains(filePath[0], "cc-web") { // should not collide with GPCC 6
+			Warnf("%s %s found, skipping download...", mesg, filePath[0])
+			Warn("To force re-download of the file, use -a flag")
+			return true
+		}
 	}
 	return false
 }

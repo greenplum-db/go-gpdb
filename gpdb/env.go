@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -205,7 +204,4 @@ func env() {
 // Display the env content on the screen
 func displayEnvFileToSource(file string) {
 	printOnScreen("Source the environment file to set the environment", []string{"source " + file})
-	cmd := exec.Command("bash", "source "+file)
-	Infof("source " + file)
-	cmd.Run()
 }

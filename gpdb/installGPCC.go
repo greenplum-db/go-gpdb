@@ -226,18 +226,9 @@ func (i *Installation) createGPCCCOnfigurationFile() string {
 func (i *Installation) installGPCCBinaries4x() {
 	Infof("Installing gpcc binaries for the cc version: %s", cmdOptions.CCVersion)
 	executeGPPCFile := Config.CORE.TEMPDIR + "execute_gpcc.sh"
-	var v float64
-	var gpcc4or6 string
-	v = extractVersion(cmdOptions.CCVersion)
-	if v >= 6.0 {
-		gpcc4or6 = fmt.Sprintf("/usr/local/src/gpdbinstall/download/greenplum-cc-web-%s-rhel7_x86_64/gpccinstall-%s", cmdOptions.CCVersion, cmdOptions.CCVersion)
-	} else {
-		gpcc4or6 = fmt.Sprintf("/usr/local/src/gpdbinstall/download/greenplum-cc-web-%s-LINUX-x86_64/gpccinstall-%s", cmdOptions.CCVersion, cmdOptions.CCVersion)
-	}
 	generateBashFileAndExecuteTheBashFile(executeGPPCFile, "/bin/sh", []string{
 		fmt.Sprintf("source %s", i.EnvFile),
-		gpcc4or6,
-		fmt.Sprintf("%s -c %s &>/dev/null << EOF", gpcc4or6, i.createGPCCCOnfigurationFile()),
+		fmt.Sprintf("%s -c %s &>/dev/null << EOF", i.GPCC.GPCCBinaryLoc, i.createGPCCCOnfigurationFile()),
 		"y",
 		"EOF",
 	})
