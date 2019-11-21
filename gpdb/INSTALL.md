@@ -9,31 +9,25 @@ Make sure you are logged in as a non-root user (e.g. gpadmin) which has the nece
 ## Install and configure go-gpdb
 
 ```sh
--- Install the needed package
-sudo yum install -y sshpass wget
+sudo yum install -y sudo wget sshpass
 
--- Go to the home directory
-cd
-
--- Get the latest gpdb installer releaste
+# Download the latest gpdb installer release
+cd ~
 curl -s https://api.github.com/repos/pivotal-gss/go-gpdb/releases/latest \
       | grep "browser_download_url.*gpdb" \
       | grep -v "browser_download_url.*datalab" \
-      | cut -d : -f 2,3 \
-      | tr -d \" \
+      | cut -d : -f 2,3 | tr -d \" \
       | wget -qi - -O gpdb
 
--- Provide the execute permission
 chmod +x gpdb
 
--- Get the configuration and update the changes as desried 
 wget https://raw.githubusercontent.com/pivotal-gss/go-gpdb/master/gpdb/config.yml
-sed -i "s/gpadmin/$USER/g" config.yml
+sed -i "s/gpadmin/${USER}/g" config.yml
 sed -i "s|/data|data|g" config.yml
 sed -i "s|/usr/local/src|src|g" config.yml
 
--- Specify a single node GPDB installation on localhost
-printf $HOSTNAME > hostfile
+# Specify a single node GPDB installation on localhost
+printf "${HOSTNAME}" > hostfile
 ```
 
 ## Run go-gpdb
@@ -54,7 +48,7 @@ If you have multiple VM host and requires the tool to create a multi node Greenp
 ## Troubleshooting
 
 + If you run into ssh issues, make sure `ssh $HOSTNAME` works. If not, you can run `ssh-keygen -f ~/.ssh/id_rsa -N '' && cat .ssh/id_rsa.pub >> .ssh/authorized_keys`.
-+ Here is a sample script to set up all of the packages and permissions needed on your host for gpdb installation: [os.prep.sh](https://github.com/pivotal-gss/go-gpdb/blob/master/scripts/os.prep.sh).
++ Some warnings such as "Master open file limit is 1024 should be >= 65535" can be resolved with this script: [os.prep.sh](../scripts/os.prep.sh).
 + The first line of the `/etc/hosts` is always ignored and it can be anything, your hostname should start from the second line and its usually where the localhost information should start.
 
 **NOTE:** Comments on `/etc/hosts` are not ignored by the tool, its a drawback so ensure there is no comments on /etc/hosts after the first line
@@ -76,8 +70,8 @@ $ cat /etc/hosts
 192.168.99.102 gpdb2-m
 ```
 
-The tool will detect that there is multiple host and create a cluster, no extra steps needed
+The tool will detect that there are multiple hosts and create a cluster, no extra steps needed.
 
 ## Demo 
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/q5v6ac2lbd4/0.jpg)](https://www.youtube.com/watch?v=q5v6ac2lbd4&feature=youtu.be)
+[![demo](https://img.youtube.com/vi/q5v6ac2lbd4/0.jpg)](https://www.youtube.com/watch?v=q5v6ac2lbd4)
