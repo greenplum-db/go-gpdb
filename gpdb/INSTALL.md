@@ -4,13 +4,15 @@ This guide has been tested on fresh CentOS7 and RHEL7 instances spun up in Googl
 
 ## Prepare your environment
 
-Make sure you are logged in as a non-root user (e.g. gpadmin) which has the necessary privileges to `sudo yum install` the greenplum-db packages.
+Configure a non-root user (e.g. gpadmin) and grant it the necessary privileges to `sudo yum install` the greenplum-db packages to the locations specified in config.yml in the next section.
+
+```sh
+yum install -y sshpass sudo wget
+```
 
 ## Install and configure go-gpdb
 
 ```sh
-sudo yum install -y sudo wget sshpass
-
 # Download the latest gpdb installer release
 cd ~
 curl -s https://api.github.com/repos/pivotal-gss/go-gpdb/releases/latest \
