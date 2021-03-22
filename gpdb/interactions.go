@@ -186,7 +186,7 @@ func (r *Responses) WhichProduct(token string) {
 
 	// Crap out if the user choose GPDB version less that 5.24
 	c := extractVersion(r.UserRequest.versionChoosen)
-	if c > 5.24 && !r.GPCC {
+	if c > 5.24 && !r.GPCC && cmdOptions.Product == "gpcc" {
 		Fatalf("GPCC is no longer connected to GPDB product category from version 5.24 onwards, retry again..")
 	}
 

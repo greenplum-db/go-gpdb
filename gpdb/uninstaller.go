@@ -62,6 +62,7 @@ func (i *Installation) uninstallGPCCScript() error {
 		"grep -v gpmon $MASTER_DATA_DIRECTORY/pg_hba.conf." + i.Timestamp + " > $MASTER_DATA_DIRECTORY/pg_hba.conf",
 		"rm -rf $MASTER_DATA_DIRECTORY/pg_hba.conf." + i.Timestamp + " &>/dev/null",
 		"psql -d template1 -p $PGPORT -Atc \"drop database gpperfmon\" &>/dev/null",
+		"psql -d postgres -p $PGPORT -Atc \"drop schema gpcc_schema cascade\" &>/dev/null",
 		"psql -d template1 -p $PGPORT -Atc \"drop role gpmon\" &>/dev/null",
 		"rm -rf $MASTER_DATA_DIRECTORY/gpperfmon/*",
 		"cp " + i.EnvFile + " " + i.EnvFile + "." + i.Timestamp,
