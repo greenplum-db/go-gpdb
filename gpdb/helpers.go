@@ -318,7 +318,7 @@ func strToInt(s string) int {
 // Extract the version
 func extractVersion(version string) float64 {
 	var f float64
-	re := regexp.MustCompile("\\d.\\d")
+	re := regexp.MustCompile("\\d.\\d+")
 	labNo := re.FindAllString(version, -1)
 	if len(labNo) > 0 { // we found the lab number
 		f, err := strconv.ParseFloat(labNo[0], 64)

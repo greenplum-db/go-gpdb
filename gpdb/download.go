@@ -15,6 +15,7 @@ const (
 	RefreshToken                 = EndPoint + "/api/v2/authentication/access_tokens"
 	Products                     = EndPoint + "/api/v2/products"
 	ProductSlug                  = "pivotal-gpdb" // we only care about this slug rest we ignore
+	CommandCenterSlug            = "gpdb-command-center"
 	OpenSourceReleaseAPIEndpoint = "https://api.github.com/repos/greenplum-db/gpdb/releases"
 )
 
@@ -167,6 +168,7 @@ type Responses struct {
 	EULALink     string
 	productFiles ProductFilesObjects
 	UserRequest  userChoice
+	GPCC 		 bool
 }
 
 type GithubReleases []struct {
@@ -256,8 +258,19 @@ func (r *Responses) extractProduct(token string) {
 	}
 
 	// Extract the releases
+	if cmdOptions.Product == "gpcc" {
+		r.GPCC = AreYourLookingForGPCCForGPDB524AndAbove()
+	}
 	r.extractRelease(token)
+}
 
+// Are we looking for GPCC for GPDB greater than 5.23, since from 5.24 the GPCC is a separate product
+func AreYourLookingForGPCCForGPDB524AndAbove() bool {
+	fmt.Println("Are you looking to download GPCC for GPDB version greater thank 5.23 ?")
+	if YesOrNoConfirmation() == "y" {
+		return true
+	}
+	return false
 }
 
 // Extract all the Releases of the product with slug : pivotal-gpdb
@@ -267,7 +280,13 @@ func (r *Responses) extractRelease(token string) {
 
 	// Check what is the URL for the all the releases for product of our interest
 	for _, product := range r.ProductList.Products {
-		if product.Slug == ProductSlug {
+		if product.Slug == ProductSlug && !r.GPCC {
+			ReleaseURL = product.Links.Releases.Href
+			PivotalProduct = product.Name
+			Debugf("Release URL: %s", ReleaseURL)
+			Debugf("Pivotal Product: %s", PivotalProduct)
+		}
+		if product.Slug == CommandCenterSlug && r.GPCC {
 			ReleaseURL = product.Links.Releases.Href
 			PivotalProduct = product.Name
 			Debugf("Release URL: %s", ReleaseURL)
@@ -296,6 +315,16 @@ func (r *Responses) extractRelease(token string) {
 	// If the user has not provided the version, prompt to choose it
 	// else if provided continue with download
 	r.ShowAvailableVersion(token)
+}
+
+// Is this a request for GPCC 4.x
+func (r *Responses) isThisGPCC4xAboveRequest() bool {
+	v := extractVersion(r.UserRequest.versionChoosen)
+	if v > 4.0 && r.GPCC { // no longer is part of the GPDB download package
+		return true
+	} else { // legacy GPCC download location
+		return false
+	}
 }
 
 // From the user choice extract all the files available on that version

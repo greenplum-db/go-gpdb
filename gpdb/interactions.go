@@ -184,43 +184,57 @@ func (r *Responses) WhichProduct(token string) {
 	var ProductOutputMap = make(map[string]string)
 	var ProductOptions = []string{}
 
-	// This is the correct API, all the files are inside the file group MAP
-	for _, k := range r.VersionList.File_groups {
-		// GPDB Options
-		if cmdOptions.Product == "gpdb" {
-			var rx *regexp.Regexp
-			if isThisGPDB6xAndAbove() { // From version 6 we will use the newer regex
-				rx, _ = regexp.Compile("(?i)" + rx_gpdb_for_6_n_above)
-			} else {
-				rx, _ = regexp.Compile("(?i)" + rx_gpdb)
-			}
+	// Crap out if the user choose GPDB version less that 5.24
+	c := extractVersion(r.UserRequest.versionChoosen)
+	if c > 5.24 && !r.GPCC {
+		Fatalf("GPCC is no longer connected to GPDB product category from version 5.24 onwards, retry again..")
+	}
 
-			for _, j := range k.Product_files {
-				if rx.MatchString(j.Name) {
-					Debugf("gpdb product list: %v", rx.FindString(j.Name))
-					r.UserRequest.ProductFileURL = j.Links.Self.Href
-					r.UserRequest.DownloadURL = j.Links.Download.Href
+	// For command center greater than 5.23
+	if cmdOptions.Product == "gpcc" && r.isThisGPCC4xAboveRequest() {
+		for _, j := range r.VersionList.Product_files {
+			ProductOutputMap[j.Name] = j.Links.Self.Href
+			ProductOptions = append(ProductOptions, j.Name)
+		}
+	} else {
+		// This is the correct API, all the files are inside the file group MAP
+		for _, k := range r.VersionList.File_groups {
+			// GPDB Options
+			if cmdOptions.Product == "gpdb" {
+				var rx *regexp.Regexp
+				if isThisGPDB6xAndAbove() { // From version 6 we will use the newer regex
+					rx, _ = regexp.Compile("(?i)" + rx_gpdb_for_6_n_above)
+				} else {
+					rx, _ = regexp.Compile("(?i)" + rx_gpdb)
+				}
+
+				for _, j := range k.Product_files {
+					if rx.MatchString(j.Name) {
+						Debugf("gpdb product list: %v", rx.FindString(j.Name))
+						r.UserRequest.ProductFileURL = j.Links.Self.Href
+						r.UserRequest.DownloadURL = j.Links.Download.Href
+					}
 				}
 			}
-		}
 
-		// GPCC option
-		if cmdOptions.Product == "gpcc" {
-			rx, _ := regexp.Compile(rx_gpcc)
-			if rx.MatchString(k.Name) {
-				Debugf("gpdb product list: ", rx.FindString(k.Name))
+			// GPCC option
+			if cmdOptions.Product == "gpcc" {
+				rx, _ := regexp.Compile(rx_gpcc)
+				if rx.MatchString(k.Name) {
+					Debugf("gpdb product list: ", rx.FindString(k.Name))
+					for _, j := range k.Product_files {
+						ProductOutputMap[j.Name] = j.Links.Self.Href
+						ProductOptions = append(ProductOptions, j.Name)
+					}
+				}
+			}
+
+			// Others or fallback method
+			if cmdOptions.Product == "gpextras" {
 				for _, j := range k.Product_files {
 					ProductOutputMap[j.Name] = j.Links.Self.Href
 					ProductOptions = append(ProductOptions, j.Name)
 				}
-			}
-		}
-
-		// Others or fallback method
-		if cmdOptions.Product == "gpextras" {
-			for _, j := range k.Product_files {
-				ProductOutputMap[j.Name] = j.Links.Self.Href
-				ProductOptions = append(ProductOptions, j.Name)
 			}
 		}
 	}
