@@ -19,10 +19,10 @@ select $$ssh $$ || hostname || $$ "rm -rf /tmp/.s.PGSQL.$$ || port || $$*"$$ fro
 union
 `
 
-	// From GPDB6 onwards there is no filespace, so we cannot know what is the default data directory from database
-	// we will get that information from the gpinitsystem struct that we created earlier
+	// From GPDB6 onwards there is no pg_filespace_entry view, the directory is
+	// now part of gp_segment_configuration table
 	if isThisGPDB6xAndAbove() {
-		queryString = queryString + fmt.Sprintf(`select $$ssh $$ || c.hostname || $$ "rm -rf %s*" $$ from gp_segment_configuration c`, i.GPInitSystem.MasterDir+"/"+i.GPInitSystem.ArrayName)
+		queryString = queryString + `select $$ssh $$ || c.hostname || $$ "rm -rf $$ || datadir || $$*"$$ from gp_segment_configuration c`
 	} else {
 		queryString = queryString + `select $$ssh $$ || c.hostname || $$ "rm -rf $$ || f.fselocation || $$"$$ from pg_filespace_entry f, gp_segment_configuration c where c.dbid = f.fsedbid`
 	}
