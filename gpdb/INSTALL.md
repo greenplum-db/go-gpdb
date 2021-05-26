@@ -24,6 +24,8 @@ curl -s https://api.github.com/repos/greenplum-db/go-gpdb/releases/latest \
 chmod +x gpdb
 
 wget https://raw.githubusercontent.com/pivotal-gss/go-gpdb/master/gpdb/config.yml
+# For datalab created VM, the below changes are not needed
+# For your own VM, make sure the directory is created and your current user has permission 
 sed -i "s/gpadmin/${USER}/g" config.yml
 mkdir -p data src
 sed -i "s|/data|data|g" config.yml
