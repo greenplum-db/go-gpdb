@@ -121,6 +121,17 @@ download_latest_gpdb_cli() {
       chown gpadmin:gpadmin /home/gpadmin/config.yml
     } &> /dev/null
     spinner $! "Copying the config file to the directory: /home/gpadmin"
+
+    # If the file is empty the warn user
+    if [ -s $GOBIN/gpdb ]; then
+      echo "The gpdb file has been downloaded cleanly"
+      echo "Exiting - Success"
+    else
+      echo "The gpdb file has been zero size"
+      echo "Connect to vm using datalab ssh and run the below command"
+      echo "curl -s https://api.github.com/repos/greenplum-db/go-gpdb/releases/latest | grep \"browser_download_url.*gpdb\" | grep -v \"browser_download_url.*datalab\" | cut -d : -f 2,3 | tr -d \\\" | wget -qi - -O \$GOBIN/gpdb"
+      echo "Exiting - Failed during gpdb download"
+    fi
 }
 
 banner "Configuration"
