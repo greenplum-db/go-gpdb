@@ -209,10 +209,9 @@ func locatedRpmFile(search, binary string) (string, bool) {
 }
 
 // Locate the full directory name where the rpm was installed
-func locateGreenplumInstallationDirectory() string {
+func locateGreenplumInstallationDirectory(baseDir string) string {
 	// rpm usually installs the software in /usr/local
 	// we need to check what is the directory name it has taken
-	baseDir := "/usr/local/"
 	folders, _ := FilterDirsGlob(baseDir, fmt.Sprintf("*%s*", cmdOptions.Version))
 	if len(folders) > 0 {
 		// We found one

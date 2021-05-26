@@ -88,11 +88,11 @@ func (i *Installation) installProduct() {
 	// Is this a binary or rpm file
 	if isItBinaryFile {
 		// Located a binary file
-		i.binaryFileLocated(binFile)
+		i.installBinaryFile(binFile)
 		i.BinaryOrRpm = "binary"
 	} else {
 		// Located a rpm file
-		i.rpmFileLocated(binFile)
+		i.installRpmFile(binFile)
 		i.BinaryOrRpm = "rpm"
 		i.RpmFileName = binFile
 	}
@@ -106,10 +106,10 @@ func (i *Installation) installProduct() {
 }
 
 // We have located a binary file
-func (i *Installation) binaryFileLocated(binFile string) {
+func (i *Installation) installBinaryFile(binFile string) {
 	// Location and name of the binaries
 	Infof("Using the bin file to install the GPDB Product: %s", binFile)
-	i.BinaryInstallationLocation = "/usr/local/greenplum-db-" + cmdOptions.Version
+	i.BinaryInstallationLocation = fmt.Sprintf("/usr/local/%[1]s/greenplum-db-%[1]s", cmdOptions.Version)
 
 	// Execute the command to install the binaries
 	var scriptOption = []string{"yes", i.BinaryInstallationLocation, "yes", "yes"}
@@ -120,14 +120,44 @@ func (i *Installation) binaryFileLocated(binFile string) {
 }
 
 // Got a rpm file
-func (i *Installation) rpmFileLocated(binFile string) {
-	Infof("Using the rpm file to install the GPDB Product: %s, this might take several minutes....", binFile)
+func (i *Installation) installRpmFile(binFile string) {
+	// Pre rpm setup: Install dependencies
+	i.preRpmInstallationSetup()
 
 	// Execute the command to install the rpm
-	executeOsCommand("sudo", "yum", "install", binFile, "-y", "-q")
+	Infof("Using the rpm file to install the GPDB Product: %s, this might take several minutes....", binFile)
+	baseDir := "/usr/local/" + cmdOptions.Version
+	CreateDir(baseDir)
+	executeOsCommand("sudo", "rpm", "--install", binFile, "--prefix=" + baseDir ,"--force")
+
+	// Post Rpm setup: Change ownership
+	Infof("Changing the ownership of the folder %s", baseDir)
+	executeOsCommand("sudo", "chown", "-R", "gpadmin:gpadmin", baseDir + "/greenplum*")
 
 	// Find the directory where the rpm was installed
-	i.BinaryInstallationLocation = locateGreenplumInstallationDirectory()
+	i.BinaryInstallationLocation = locateGreenplumInstallationDirectory(baseDir)
+}
+
+// Setup the infrastructure for installing the rpm binary
+func (i *Installation) preRpmInstallationSetup() {
+	// Removing previous installed rpm's
+	Infof("Removing previous greenplum rpm's from rpm database")
+	cleanupPreviousRpms := Config.CORE.TEMPDIR + "cleanup_previous_rpms.sh"
+	options := []string{
+		"sudo rpm -e --justdb $(rpm -qa | grep green) ",
+	}
+	generateBashFileAndExecuteTheBashFile(cleanupPreviousRpms, "/bin/sh", options)
+
+	// Install all dependencies
+	Infof("Installing all the dependencies")
+	var dependencies = []string{"apr-util", "bash", "bzip2", "curl", "krb5", "libcurl", "libevent", "libxml2",
+		"libyaml", "zlib", "openldap", "openssh", "openssl", "openssl-libs", "perl", "readline", "rsync", "R",
+		"sed", "tar", "zip", "krb5-devel"}
+
+	for _, i := range dependencies {
+		Debugf("Installing pre rpm installation package: %s", i)
+		executeOsCommand("sudo", "yum",  "install", i, "-y", "-q")
+	}
 }
 
 // Check if the provided hostnames are valid
