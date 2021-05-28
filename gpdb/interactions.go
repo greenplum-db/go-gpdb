@@ -114,6 +114,9 @@ func ShowOpenSourceAvailableVersion(g GithubReleases) (string, string, int64) {
 
 	// Regex compile for open source
 	rx, _ := regexp.Compile("(?i)" + rx_open_source_gpdb)
+	if getSystemInfoAndCheckIfItsUbuntu() {
+		rx, _ = regexp.Compile("(?i)" + rx_gpdb_ubuntu_release)
+	}
 
 	// Get all the releases from the ReleaseJson
 	for _, release := range g {
@@ -198,12 +201,18 @@ func (r *Responses) WhichProduct(token string) {
 		}
 	} else {
 		// This is the correct API, all the files are inside the file group MAP
+		isItUbuntu := getSystemInfoAndCheckIfItsUbuntu()
 		for _, k := range r.VersionList.File_groups {
 			// GPDB Options
 			if cmdOptions.Product == "gpdb" {
 				var rx *regexp.Regexp
-				if isThisGPDB6xAndAbove() { // From version 6 we will use the newer regex
+				if isItUbuntu && !isThisGPDB6xAndAbove() { // if this is ubuntu release and version to download is below GP6
+					Fatalf("Ubuntu greenplum download is only available with GPDB 6.x and above ")
+				} else if isThisGPDB6xAndAbove() { // From version 6 we will use the newer regex
 					rx, _ = regexp.Compile("(?i)" + rx_gpdb_for_6_n_above)
+					if isItUbuntu { // If the os is ubuntu
+						rx, _ = regexp.Compile("(?i)" + rx_gpdb_ubuntu_release)
+					}
 				} else {
 					rx, _ = regexp.Compile("(?i)" + rx_gpdb)
 				}
