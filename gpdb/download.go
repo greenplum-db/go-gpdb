@@ -33,7 +33,8 @@ var (
 	// Open Source release
 	rx_open_source_gpdb = `greenplum-(db|database)-(\d+\.)(\d+\.)(\d+)?(\-beta)?(\.\d)?-rhel7-x86_64.rpm`
 	// Ubuntu greenplum release
-	rx_gpdb_ubuntu_release = `greenplum-(db|database)-(\d+\.)(\d+\.)(\d+)-ubuntu.*`
+	rx_gpdb_ubuntu_release_open_source = `greenplum-(db|database)-(\d+\.)(\d+\.)(\d+)-ubuntu.*`
+	rx_gpdb_ubuntu_release = `Greenplum Database (\d+\.)(\d+\.)(\d+) Installer for Ubuntu.*`
 )
 
 // Struct to where all the API response will be stored

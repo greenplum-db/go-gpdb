@@ -115,7 +115,8 @@ func ShowOpenSourceAvailableVersion(g GithubReleases) (string, string, int64) {
 	// Regex compile for open source
 	rx, _ := regexp.Compile("(?i)" + rx_open_source_gpdb)
 	if getSystemInfoAndCheckIfItsUbuntu() {
-		rx, _ = regexp.Compile("(?i)" + rx_gpdb_ubuntu_release)
+		Debug("Changed the regex for finding the ubuntu product in open source")
+		rx, _ = regexp.Compile("(?i)" + rx_gpdb_ubuntu_release_open_source)
 	}
 
 	// Get all the releases from the ReleaseJson
@@ -211,6 +212,7 @@ func (r *Responses) WhichProduct(token string) {
 				} else if isThisGPDB6xAndAbove() { // From version 6 we will use the newer regex
 					rx, _ = regexp.Compile("(?i)" + rx_gpdb_for_6_n_above)
 					if isItUbuntu { // If the os is ubuntu
+						Debug("Changed the regex for finding the ubuntu product in pivnet")
 						rx, _ = regexp.Compile("(?i)" + rx_gpdb_ubuntu_release)
 					}
 				} else {
