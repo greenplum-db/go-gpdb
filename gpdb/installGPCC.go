@@ -9,8 +9,13 @@ import (
 )
 
 func (i *Installation) preGPCCChecks() {
-
 	Infof("Running the pre checks to install GPCC version \"%s\" on the GPDB Version \"%s\"", cmdOptions.CCVersion, cmdOptions.Version)
+
+	// If this os is ubuntu, currently we dont have any version available to install GPCC on ubuntu
+	if getSystemInfoAndCheckIfItsUbuntu() {
+		Fatalf("Currently install of GPCC via %s tool is not supported", programName)
+	}
+
 	// Check if there is already a version of GPDB installed
 	i.EnvFile = installedEnvFiles(fmt.Sprintf("*%s*", cmdOptions.Version), "choose", false)
 
