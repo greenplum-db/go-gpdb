@@ -129,25 +129,7 @@ func installedEnvFiles(search, confirmation string, ignoreErr bool) string {
 		output = append(output, fmt.Sprintf("%s|%s%s", strconv.Itoa(k+1), envName, readFileAndGatherInformation(v)))
 	}
 
-	if len(allEnv) > 0 && getSystemInfoAndCheckIfItsUbuntu() { // For ubuntu we have only one installation option
-		msg := fmt.Sprintf("There are other GPDB database installed on this box, " +
-			"NOTE: with ubuntu you can only be running one database version at a time, " +
-			"would you like us to remove and continue with your request of installing the version %s", cmdOptions.Version)
-
-
-		// Now ask for the confirmation
-		confirm := YesOrNoConfirmation()
-
-		// What was the confirmation
-		if confirm == "y" { // yes
-			Infof("Continuing with the installation of version: %s", cmdOptions.Version)
-			remove(true)
-			return installedEnvFiles(search, confirmation, ignoreErr)
-		} else { // no
-			Infof("Cancelling the installation...")
-			os.Exit(0)
-		}
-	} else if len(allEnv) > 0 && cmdOptions.ListEnv { // if the option is to list all the env, without prompt
+	if len(allEnv) > 0 && cmdOptions.ListEnv { // if the option is to list all the env, without prompt
 
 		printOnScreen("Here is a list of env installed", output)
 		os.Exit(0)
