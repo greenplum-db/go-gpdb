@@ -23,7 +23,10 @@ banner "User Accounts"
 { echo "root:changeme" | chpasswd & } &> /dev/null
 spinner $! "Setting root password"
 
-{ useradd -m gpadmin --groups wheel & } &> /dev/null
+{ getent group wheel || groupadd wheel & } &> /dev/null
+spinner $! "Creating user group if it doesn't exists"
+
+{ useradd -s /bin/bash -m gpadmin --groups wheel & } &> /dev/null
 spinner $! "Creating gpadmin user"
 
 { echo "gpadmin:changeme" | chpasswd & } &> /dev/null
