@@ -140,7 +140,7 @@ func remove() {
 		timestamp = strings.Split(chosenEnvFile, "_")[2]
 		version = strings.Split(chosenEnvFile, "_")[1]
 	}
-	Infof("The choosen enviornment file to remove is: %s ", chosenEnvFile)
+	Infof("The chosen environment file to remove is: %s ", chosenEnvFile)
 	Info("Uninstalling the environment")
 
 	// If there is failure in gpstart, user can use force to force manual uninstallation

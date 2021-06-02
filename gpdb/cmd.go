@@ -118,7 +118,7 @@ var removeCmd = &cobra.Command{
 	Example: "For examples refer: https://github.com/pivotal-gss/go-gpdb/tree/master/gpdb#remove",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Remove the installation
-		remove()
+		remove(false)
 	},
 }
 
