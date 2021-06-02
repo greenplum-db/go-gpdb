@@ -73,6 +73,12 @@ func install() {
 	}
 	Debugf("Is this single or multi node installation: %s", i.SingleORMulti)
 
+	// Currently we will only support single VM installation of ubuntu, if there is a need we can
+	// expand the tool for multi segment on different hosts
+	if i.SingleORMulti == "multi" && getSystemInfoAndCheckIfItsUbuntu() {
+		Fatalf("The installation of GPDB via %s tool, only support single VM at the moment", programName)
+	}
+
 	// Get or Generate the hostname file
 	i.generateHostFile()
 
