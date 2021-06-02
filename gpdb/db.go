@@ -33,7 +33,7 @@ func cleanupGpccProcess() {
 	Infof("Cleaning up gpcc process is found any")
 	cleanupGPCCLoc := Config.CORE.TEMPDIR + "clean_all_gpcc.sh"
 	generateBashFileAndExecuteTheBashFile(cleanupGPCCLoc, "/bin/sh", []string{
-		"ps -ef | egrep \"gpsmon|gpmon|gpmonws|lighttpd\" | grep -v grep | awk '{print $2}' | xargs -n1 /bin/kill -11 &>/dev/null",
+		"ps -ef | egrep \"gpsmon|gpmon|gpmonws|lighttpd\" | grep -v grep | awk '{print $2}' | xargs -n1 /bin/kill -11 >/dev/null 2>&1",
 	})
 }
 
@@ -109,7 +109,7 @@ func startDB(envFile string) {
 
 	// BashScript
 	startFile := Config.CORE.TEMPDIR + "start.sh"
-	generateBashFileAndExecuteTheBashFile(startFile, "/bin/sh", []string{
+	generateBashFileAndExecuteTheBashFile(startFile, "/bin/bash", []string{
 		"source " + envFile,
 		"gpstart -a",
 	})

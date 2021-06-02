@@ -150,8 +150,10 @@ func locateAndExtractPackage(search string) (string, bool) {
 	// Did we find any
 	if len(allfiles) > 0 {
 		binary := detectFileName(allfiles)
-		if strings.HasSuffix(binary, ".rpm") {
-			return locatedRpmFile(search, binary)
+		if strings.HasSuffix(binary, ".rpm")  {
+			return locatedNonZipFile(search, binary, "rpm")
+		} else if strings.HasSuffix(binary, ".deb") {
+			return locatedNonZipFile(search, binary, "deb")
 		} else {
 			return locatedBinaryFile(search, binary)
 		}
@@ -202,9 +204,9 @@ func locatedBinaryFile(search, binary string) (string, bool) {
 	return obtainExecutableFilename(search), true
 }
 
-// located a rpm file
-func locatedRpmFile(search, binary string) (string, bool) {
-	Infof("Found a rpm binary for the version %s: %s", cmdOptions.Version, binary)
+// located a non zip file
+func locatedNonZipFile(search, binary, extension string) (string, bool) {
+	Infof("Found a %s binary for the version %s: %s", extension, cmdOptions.Version, binary)
 	return binary, false
 }
 
@@ -286,7 +288,7 @@ func contentExtractor(contents []byte, src string, vars []string) bytes.Buffer {
 
 // Check if the binaries exits and unzip the binaries.
 func getBinaryFile(version string) (string, bool) {
-	Debugf("Finding and unziping the binaries for the version %s", version)
+	Debugf("Finding and unzipping the binaries for the version %s", version)
 	return locateAndExtractPackage(fmt.Sprintf("*%s*", version))
 }
 
@@ -317,7 +319,7 @@ func strToInt(s string) int {
 // Extract the version
 func extractVersion(version string) float64 {
 	var f float64
-	re := regexp.MustCompile("\\d.\\d+")
+	re := regexp.MustCompile("\\d+.\\d+")
 	labNo := re.FindAllString(version, -1)
 	if len(labNo) > 0 { // we found the lab number
 		f, err := strconv.ParseFloat(labNo[0], 64)
@@ -363,9 +365,10 @@ func isThisGPDB6xAndAbove() bool {
 
 // Check if the Os executable exists
 func isCommandAvailable(name string) bool {
-	cmd := exec.Command("command", name, "-V")
+	cmd := exec.Command(name, "-V")
 	if err := cmd.Run(); err != nil {
-		Fatalf("%s executable is not installed on this box, please run 'yum install -y %[1]s to install it'", name, name)
+		Fatalf("%[1]s executable is not installed on this box, " +
+			"please run 'yum install -y %[1]s or apt-get install -y %[1]s to install it'", name)
 	}
 	return true
 }

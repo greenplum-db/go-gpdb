@@ -86,7 +86,10 @@ func (i *Installation) installProduct() {
 	binFile, isItBinaryFile := getBinaryFile(cmdOptions.Version)
 
 	// Is this a binary or rpm file
-	if isItBinaryFile {
+	if getSystemInfoAndCheckIfItsUbuntu() {
+		// Located a deb file
+		i.installDebFile(binFile)
+	} else if isItBinaryFile {
 		// Located a binary file
 		i.installBinaryFile(binFile)
 		i.BinaryOrRpm = "binary"
@@ -165,7 +168,7 @@ func (i *Installation) setUpHost() {
 	Infof("Setting up & Checking if the host is reachable")
 
 	// Get the hostname of the master
-	i.GPInitSystem.MasterHostname = os.Getenv("HOSTNAME")
+	i.GPInitSystem.MasterHostname, _ = os.Hostname()
 	if i.GPInitSystem.MasterHostname == "" {
 		Fatalf("The environment variable 'HOSTNAME' for master host is not set")
 	}
@@ -332,6 +335,16 @@ func (i *Installation) rpmInstallOnAllSegmentHost() {
 	generateBashFileAndExecuteTheBashFile(gpsshFilename, "/bin/sh", []string{
 		fmt.Sprintf("%s -f %s \"sudo yum install -y %s\" &> /dev/null", gpsshExecutable, i.SegInstallHostLocation, destinationFileName),
 	})
+}
+
+// Install deb related GPDB software
+func (i *Installation) installDebFile(debFile string) {
+	Infof("Using deb file %s to install GPDB, this might take several minutes ....", debFile)
+	baseDir := "/usr/local/"
+	executeOsCommand("sudo", "apt", "install", debFile, "-y")
+
+	// Find the directory where the rpm was installed
+	i.BinaryInstallationLocation = locateGreenplumInstallationDirectory(baseDir)
 }
 
 // On the newer version of the GPDB they need the soft link for
