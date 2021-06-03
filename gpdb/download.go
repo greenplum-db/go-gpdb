@@ -315,14 +315,15 @@ func getSystemInfoAndCheckIfItsUbuntu() bool {
 
 	// GPDB only works with ubuntu 16 and higher
 	var validVersion float64 = 18
+	OsName := strings.Contains(strings.ToLower(sio.Os.Name), "ubuntu")
 	v := extractVersion(sio.Os.Version)
-	if v < validVersion {
+	if v < validVersion && OsName {
 		Fatalf("GPDB installation only works with version of ubuntu > %v", validVersion)
 	}
 
 	// Check if its ubuntu release of OS
 	Debugf("The OS flavour of the machine is: %s", sio.Os.Name)
-	if strings.Contains(strings.ToLower(sio.Os.Name), "ubuntu") {
+	if OsName {
 		return true
 	}
 
