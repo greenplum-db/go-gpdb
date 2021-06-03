@@ -15,6 +15,15 @@ func (i *Installation) preGPDBChecks() {
 	// Validate the master & segment exists and is readable
 	dirValidator()
 
+	// Error out if there is multiple installation of GPDB
+	allEnv := ListEnvironmentsInstalled("*")
+	if len(allEnv) > 0 && getSystemInfoAndCheckIfItsUbuntu() {
+		Warnf("Currently having multiple installation of GPDB isn't supported on Ubuntu")
+		Warnf("Please use \"%s remove -v <version>\", to remove the old version " +
+			"or to make room for this installation", programName)
+		Fatalf("Already GPDB is installed on this box...")
+	}
+
 	// Check if there is already a version of GPDB installed
 	installedEnvFiles(fmt.Sprintf("*%s*", cmdOptions.Version), "confirm", true)
 }

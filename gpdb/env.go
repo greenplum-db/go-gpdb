@@ -107,6 +107,12 @@ func readFileAndGatherInformation(file string) string {
 	return output
 }
 
+// List all the environments available
+func ListEnvironmentsInstalled(search string) []string {
+	allEnv, _ := FilterDirsGlob(Config.INSTALL.ENVDIR, search)
+	return allEnv
+}
+
 // List all the installed environment files.
 func installedEnvFiles(search, confirmation string, ignoreErr bool) string {
 	Debugf("Searching for installed env file using the search string: %s", search)
@@ -116,7 +122,7 @@ func installedEnvFiles(search, confirmation string, ignoreErr bool) string {
 	}
 
 	// Search for environment files for that version
-	allEnv, _ := FilterDirsGlob(Config.INSTALL.ENVDIR, search)
+	allEnv := ListEnvironmentsInstalled(search)
 	if (len(allEnv) == 0 && !IsValueEmpty(cmdOptions.Version)) && !ignoreErr {
 		Fatalf("No installation found for the version: %s, try downloading and installing it", cmdOptions.Version)
 	} else if len(allEnv) == 0 && IsValueEmpty(cmdOptions.Version) {
