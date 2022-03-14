@@ -19,7 +19,7 @@ func (i *Installation) preGPDBChecks() {
 	allEnv := ListEnvironmentsInstalled("*")
 	if len(allEnv) > 0 && getSystemInfoAndCheckIfItsUbuntu() {
 		Warnf("Currently having multiple installation of GPDB isn't supported on Ubuntu")
-		Warnf("Please use \"%s remove -v <version>\", to remove the old version " +
+		Warnf("Please use \"%s remove -v <version>\", to remove the old version "+
 			"or to make room for this installation", programName)
 		Fatalf("Already GPDB is installed on this box...")
 	}
@@ -121,7 +121,7 @@ func (i *Installation) installProduct() {
 func (i *Installation) installBinaryFile(binFile string) {
 	// Location and name of the binaries
 	Infof("Using the bin file to install the GPDB Product: %s", binFile)
-	i.BinaryInstallationLocation = fmt.Sprintf("/usr/local/%[1]s/greenplum-db-%[1]s", cmdOptions.Version)
+	i.BinaryInstallationLocation = fmt.Sprintf("/usr/local/greenplum-db-%[1]s", cmdOptions.Version)
 
 	// Execute the command to install the binaries
 	var scriptOption = []string{"yes", i.BinaryInstallationLocation, "yes", "yes"}
@@ -138,13 +138,13 @@ func (i *Installation) installRpmFile(binFile string) {
 
 	// Execute the command to install the rpm
 	Infof("Using the rpm file to install the GPDB Product: %s, this might take several minutes....", binFile)
-	baseDir := "/usr/local/" + cmdOptions.Version
+	baseDir := "/usr/local/"
 	CreateDir(baseDir)
-	executeOsCommand("sudo", "rpm", "--install", binFile, "--prefix=" + baseDir ,"--force")
+	executeOsCommand("sudo", "rpm", "--install", binFile, "--prefix="+baseDir, "--force")
 
 	// Post Rpm setup: Change ownership
 	Infof("Changing the ownership of the folder %s", baseDir)
-	executeOsCommand("sudo", "chown", "-R", "gpadmin:gpadmin", baseDir + "/greenplum*")
+	executeOsCommand("sudo", "chown", "-R", "gpadmin:gpadmin", baseDir+"/greenplum*")
 
 	// Find the directory where the rpm was installed
 	i.BinaryInstallationLocation = locateGreenplumInstallationDirectory(baseDir)
@@ -168,7 +168,7 @@ func (i *Installation) preRpmInstallationSetup() {
 
 	for _, i := range dependencies {
 		Debugf("Installing pre rpm installation package: %s", i)
-		executeOsCommand("sudo", "yum",  "install", i, "-y", "-q")
+		executeOsCommand("sudo", "yum", "install", i, "-y", "-q")
 	}
 }
 
