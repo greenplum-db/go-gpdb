@@ -1,52 +1,29 @@
 package main
- import (
- 	"fmt"
- 	"github.com/ryanuber/columnize"
- 	"strings"
- 	"os/exec"
- 	"os"
- )
 
- // Check is the value is empty
- func IsValueEmpty(v string) bool {
- 	if len(strings.TrimSpace(v)) == 0 {
- 		return true
+import (
+	"fmt"
+	"github.com/ryanuber/columnize"
+	"strings"
+	"os/exec"
+	"os"
+)
 
-    
-        
-          
-    
-
-        
-    
-    @@ -18,7 +18,7 @@ func IsValueEmpty(v string) bool {
-  
+// Check is the value is empty
+func IsValueEmpty(v string) bool {
+	if len(strings.TrimSpace(v)) == 0 {
+		return true
 	}
 	return false
 }
 
- // Check if the Os executable exists
- func isCommandAvailable(name string) {
- 	cmd := exec.Command("command", name, "-v")
- 	if err := cmd.Run(); err != nil {
- 		Fatalf("the command executable \"%s\" is not installed on your machine, please install it", name)
- 	}
-
-    
-          
-            
-    
-
-          
-          
-            
-    
-
-          
-    
-    @@ -93,8 +93,8 @@ func generateEnvByVagrantKey(command string) []string {
-  
+// Check if the Os executable exists
+func isCommandAvailable(name string) {
+	cmd := exec.Command("command", name, "-v")
+	if err := cmd.Run(); err != nil {
+		Fatalf("the command executable \"%s\" is not installed on your machine, please install it", name)
+	}
 }
+
 // Check if we have the name already on our config
 func nameInConfig(a string) (int, bool) {
 	for index, b := range Config.Vagrants {
@@ -56,6 +33,7 @@ func nameInConfig(a string) (int, bool) {
 	}
 	return -1, false
 }
+
 // Execute the OS command
 func executeOsCommand(command string, env []string, args ...string) {
 	// Check if the command is installed on the local host
@@ -82,15 +60,21 @@ func executeOsCommand(command string, env []string, args ...string) {
 		Fatalf("Failed in waiting for the command %s, with arguments %s, err: %v", command, args, err)
 	}
 }
+
 // Print the data in tabular format
 func printOnScreen(message string, content []string) {
+
 	// Message before the table
 	fmt.Printf("\n%s\n\n", message)
+
 	// Print the table format
 	result := columnize.SimpleFormat(content)
+
 	// Print the results
 	fmt.Println(result + "\n")
+
 }
+
 // Get the element from the config
 func getVagrantKeyFromConfig(command string) VagrantKey {
 	index, exists := nameInConfig(cmdOptions.Hostname)
@@ -99,16 +83,18 @@ func getVagrantKeyFromConfig(command string) VagrantKey {
 	}
 	return Config.Vagrants[index]
 }
+
 // Generate a env based on what key we got
 func generateEnvByVagrantKey(command string) []string {
 	vk := getVagrantKeyFromConfig(command)
 	return generateEnvArray(vk.CPU, vk.Memory, vk.Segment, vk.Os, vk.Subnet, vk.Name, vk.Standby, vk.Developer)
 }
- // Remove slash at suffix
- func removeSlash(str string) string {
- 	if strings.HasSuffix(str, "/") {
- 		return str[0:len(str)-1]
- 	} else {
- 		return str
- 	}
- }
+
+// Remove slash at suffix
+func removeSlash(str string) string {
+	if strings.HasSuffix(str, "/") {
+		return str[0:len(str)-1]
+	} else {
+		return str
+	}
+}
