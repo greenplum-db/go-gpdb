@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/ryanuber/columnize"
-	"os"
-	"os/exec"
 	"strings"
+	"os/exec"
+	"os"
 )
 
-// IsValueEmpty Check is the value is empty
+// Check is the value is empty
 func IsValueEmpty(v string) bool {
 	if len(strings.TrimSpace(v)) == 0 {
 		return true
@@ -18,7 +18,7 @@ func IsValueEmpty(v string) bool {
 
 // Check if the Os executable exists
 func isCommandAvailable(name string) {
-	cmd := exec.Command(name, "-v")
+	cmd := exec.Command("command", name, "-v")
 	if err := cmd.Run(); err != nil {
 		Fatalf("the command executable \"%s\" is not installed on your machine, please install it", name)
 	}
@@ -93,7 +93,7 @@ func generateEnvByVagrantKey(command string) []string {
 // Remove slash at suffix
 func removeSlash(str string) string {
 	if strings.HasSuffix(str, "/") {
-		return str[0 : len(str)-1]
+		return str[0:len(str)-1]
 	} else {
 		return str
 	}

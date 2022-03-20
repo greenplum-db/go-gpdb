@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+//GPDB v6 CentOS 7 dependencies from Docs
+var dependencies = []string{"apr-util", "bash", "bzip2", "curl", "krb5", "libcurl", "libevent", "libxml2",
+	"libyaml", "zlib", "openldap", "openssh", "openssl", "openssl-libs", "perl", "readline", "rsync", "R",
+	"sed", "tar", "zip", "krb5-devel"}
+
 // Precheck before installing GPDB
 func (i *Installation) preGPDBChecks() {
 	Infof("Running precheck before installing the gpdb version: %s", cmdOptions.Version)
@@ -19,7 +24,7 @@ func (i *Installation) preGPDBChecks() {
 	allEnv := ListEnvironmentsInstalled("*")
 	if len(allEnv) > 0 && getSystemInfoAndCheckIfItsUbuntu() {
 		Warnf("Currently having multiple installation of GPDB isn't supported on Ubuntu")
-		Warnf("Please use \"%s remove -v <version>\", to remove the old version "+
+		Warnf("Please use \"%s remove -v <version>\", to remove the old version " +
 			"or to make room for this installation", programName)
 		Fatalf("Already GPDB is installed on this box...")
 	}
@@ -121,7 +126,7 @@ func (i *Installation) installProduct() {
 func (i *Installation) installBinaryFile(binFile string) {
 	// Location and name of the binaries
 	Infof("Using the bin file to install the GPDB Product: %s", binFile)
-	i.BinaryInstallationLocation = fmt.Sprintf("/usr/local/greenplum-db-%[1]s", cmdOptions.Version)
+	i.BinaryInstallationLocation = fmt.Sprintf("/usr/local/%[1]s/greenplum-db-%[1]s", cmdOptions.Version)
 
 	// Execute the command to install the binaries
 	var scriptOption = []string{"yes", i.BinaryInstallationLocation, "yes", "yes"}
@@ -138,16 +143,44 @@ func (i *Installation) installRpmFile(binFile string) {
 
 	// Execute the command to install the rpm
 	Infof("Using the rpm file to install the GPDB Product: %s, this might take several minutes....", binFile)
-	baseDir := "/usr/local/"
+	baseDir := "/usr/local/" + cmdOptions.Version
 	CreateDir(baseDir)
-	executeOsCommand("sudo", "rpm", "--install", binFile, "--prefix="+baseDir, "--force")
+	executeOsCommand("sudo", "rpm", "--install", binFile, "--prefix=" + baseDir ,"--force")
 
 	// Post Rpm setup: Change ownership
 	Infof("Changing the ownership of the folder %s", baseDir)
-	executeOsCommand("sudo", "chown", "-R", "gpadmin:gpadmin", baseDir+"/greenplum*")
+	executeOsCommand("sudo", "chown", "-R", "gpadmin:gpadmin", baseDir + "/greenplum*")
 
 	// Find the directory where the rpm was installed
 	i.BinaryInstallationLocation = locateGreenplumInstallationDirectory(baseDir)
+}
+
+// for segment rpm file
+func (i *Installation) segmentInstallRpmFile(binFile string) {
+	// Pre rpm setup: Install dependencies
+	i.segmentPreRpmInstallationSetup()
+
+	// Execute the command to install the rpm
+	Infof("Using the rpm file to install the GPDB Product on segments: %s, this might take several minutes....", binFile)
+	gpsshExecutable := fmt.Sprintf("%s/bin/gpssh", os.Getenv("GPHOME"))
+	
+	baseDir := "/usr/local/" + cmdOptions.Version
+	makeBaseDir := Config.CORE.TEMPDIR + "segments_makeBaseDir.sh"
+	generateBashFileAndExecuteTheBashFile(makeBaseDir, "/bin/sh", []string{
+		fmt.Sprintf("%s -f %s \"mkdir %s \" &> /dev/null", gpsshExecutable, i.SegInstallHostLocation, baseDir),
+	})
+	
+	gpdbRpmInstall := Config.CORE.TEMPDIR + "segments_gpdbRpmInstall.sh"	
+	generateBashFileAndExecuteTheBashFile(gpdbRpmInstall, "/bin/sh", []string{
+		fmt.Sprintf("%s -f %s sudo rpm --install %s --prefix=%s --force", gpsshExecutable, i.SegInstallHostLocation, binFile, baseDir),
+	})
+
+	// Post Rpm setup: Change ownership
+	Infof("Changing the ownership of the folder %s", baseDir)
+	gpdbChownDir := Config.CORE.TEMPDIR + "segments_gpdb_chowndir.sh"
+	generateBashFileAndExecuteTheBashFile(gpdbChownDir, "/bin/sh", []string{
+		fmt.Sprintf("%s -f %s sudo chown -R gpadmin:gpadmin %s/greenplum*", gpsshExecutable, i.SegInstallHostLocation, baseDir),
+	})
 }
 
 // Setup the infrastructure for installing the rpm binary
@@ -162,14 +195,48 @@ func (i *Installation) preRpmInstallationSetup() {
 
 	// Install all dependencies
 	Infof("Installing all the dependencies")
-	var dependencies = []string{"apr-util", "bash", "bzip2", "curl", "krb5", "libcurl", "libevent", "libxml2",
-		"libyaml", "zlib", "openldap", "openssh", "openssl", "openssl-libs", "perl", "readline", "rsync", "R",
-		"sed", "tar", "zip", "krb5-devel"}
 
-	for _, i := range dependencies {
-		Debugf("Installing pre rpm installation package: %s", i)
-		executeOsCommand("sudo", "yum", "install", i, "-y", "-q")
-	}
+// 	for _, i := range dependencies {
+// 		Debugf("Installing pre rpm installation package: %s", i)
+// 		executeOsCommand("sudo", "yum",  "install", i, "-y", "-q")
+// 	}
+
+	dependenciesOs := []string{"yum", "install", "-y", "-q"}
+	
+	dependenciesOs = append(dependenciesOs, dependencies...)
+
+    executeOsCommand("sudo", dependenciesOs...)
+	
+}
+
+// Setup the infrastructure for installing the rpm binary on segments
+func (i *Installation) segmentPreRpmInstallationSetup() {
+    gpsshExecutable := fmt.Sprintf("%s/bin/gpssh", os.Getenv("GPHOME"))
+
+	// Removing previous installed rpm's
+	Infof("Removing previous greenplum rpm's from rpm database in segments")
+	cleanupPreviousRpms := Config.CORE.TEMPDIR + "segments_cleanup_previous_rpms.sh"
+	generateBashFileAndExecuteTheBashFile(cleanupPreviousRpms, "/bin/sh", []string{
+		fmt.Sprintf("%s -f %s \"sudo rpm -e --justdb $(rpm -qa | grep green) \" &> /dev/null", gpsshExecutable, i.SegInstallHostLocation),
+	})
+
+	// Install all dependencies
+	Infof("Installing all the dependencies on segments")
+		
+	var dependenciesBash []string
+
+// 	for _, d := range dependencies {
+// 		Debugf("Adding pre rpm installation package to segment bash file: %s", d)
+// 		dependenciesBash = append(dependenciesBash, 
+// 			fmt.Sprintf("%s -f %s \"sudo yum install %s -y -q\"", gpsshExecutable, i.SegInstallHostLocation, d))
+// 	}
+// 	
+	Debugf("Adding pre rpm installation package to segment bash file: %s", fmt.Sprintf(strings.Join(dependencies[:], " ")))
+	dependenciesBash = append(dependenciesBash, 
+		fmt.Sprintf("%s -f %s \"sudo yum install %s -y -q\"", gpsshExecutable, i.SegInstallHostLocation, fmt.Sprintf(strings.Join(dependencies[:], " "))))
+	
+	installDependency := Config.CORE.TEMPDIR + "segments_install_dependencies.sh"
+	generateBashFileAndExecuteTheBashFile(installDependency, "/bin/sh", dependenciesBash)
 }
 
 // Check if the provided hostnames are valid
@@ -328,8 +395,7 @@ func (i *Installation) runSegInstall() {
 
 // Run yum install on all the segment host to install the GPDB software
 func (i *Installation) rpmInstallOnAllSegmentHost() {
-	Infof("Running rpm install to install the software on all the segment host, this might take several minutes....")
-	gpsshExecutable := fmt.Sprintf("%s/bin/gpssh", os.Getenv("GPHOME"))
+	Infof("Copying rmp file to segment hosts.")
 	gpscpExecutable := fmt.Sprintf("%s/bin/gpscp", os.Getenv("GPHOME"))
 	destinationFileName := fmt.Sprintf("/tmp/gpdb-%s.rpm", cmdOptions.Version)
 
@@ -340,10 +406,8 @@ func (i *Installation) rpmInstallOnAllSegmentHost() {
 	})
 
 	// Now run the yum install on all the segments
-	gpsshFilename := Config.CORE.TEMPDIR + "gpssh_install_gpdb_rpm.sh"
-	generateBashFileAndExecuteTheBashFile(gpsshFilename, "/bin/sh", []string{
-		fmt.Sprintf("%s -f %s \"sudo yum install -y %s\" &> /dev/null", gpsshExecutable, i.SegInstallHostLocation, destinationFileName),
-	})
+	Infof("Running rpm install to install the software on all the segment host, this might take several minutes....")
+	i.segmentInstallRpmFile(destinationFileName)
 }
 
 // Install deb related GPDB software
