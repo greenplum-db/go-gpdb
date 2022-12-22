@@ -149,7 +149,7 @@ func (i *Installation) installRpmFile(binFile string) {
 
 	// Post Rpm setup: Change ownership
 	Infof("Changing the ownership of the folder %s", baseDir)
-	executeOsCommand("sudo", "chown", "-R", "gpadmin:gpadmin", baseDir + "/greenplum*")
+	executeOsCommand("sudo", "/bin/sh", "-c", "chown -R gpadmin:gpadmin " + baseDir + "/greenplum*")
 
 	// Find the directory where the rpm was installed
 	i.BinaryInstallationLocation = locateGreenplumInstallationDirectory(baseDir)
@@ -167,7 +167,7 @@ func (i *Installation) segmentInstallRpmFile(binFile string) {
 	baseDir := "/usr/local/" + cmdOptions.Version
 	makeBaseDir := Config.CORE.TEMPDIR + "segments_makeBaseDir.sh"
 	generateBashFileAndExecuteTheBashFile(makeBaseDir, "/bin/sh", []string{
-		fmt.Sprintf("%s -f %s \"mkdir %s \" &> /dev/null", gpsshExecutable, i.SegInstallHostLocation, baseDir),
+		fmt.Sprintf("%s -f %s \"mkdir -p %s \" &> /dev/null", gpsshExecutable, i.SegInstallHostLocation, baseDir),
 	})
 	
 	gpdbRpmInstall := Config.CORE.TEMPDIR + "segments_gpdbRpmInstall.sh"	
@@ -217,7 +217,7 @@ func (i *Installation) segmentPreRpmInstallationSetup() {
 	Infof("Removing previous greenplum rpm's from rpm database in segments")
 	cleanupPreviousRpms := Config.CORE.TEMPDIR + "segments_cleanup_previous_rpms.sh"
 	generateBashFileAndExecuteTheBashFile(cleanupPreviousRpms, "/bin/sh", []string{
-		fmt.Sprintf("%s -f %s \"sudo rpm -e --justdb $(rpm -qa | grep green) \" &> /dev/null", gpsshExecutable, i.SegInstallHostLocation),
+		fmt.Sprintf("%s -f %s \"sudo rpm -e --justdb \\$(rpm -qa | grep green) || true\" ", gpsshExecutable, i.SegInstallHostLocation),
 	})
 
 	// Install all dependencies
@@ -370,6 +370,8 @@ func (i *Installation) setupSshCopyID() {
 		log.Fatal(err)
 	}
 	defer file.Close()
+	
+	pubFile := fmt.Sprintf("%s/.ssh/id_rsa", os.Getenv("HOME"))
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -377,7 +379,7 @@ func (i *Installation) setupSshCopyID() {
 		Debugf("Setting up the ssh Copy ID for all the host %s", host)
 		sshCopyIDFileName := Config.CORE.TEMPDIR + "ssh_copy_id.sh"
 		generateBashFileAndExecuteTheBashFile(sshCopyIDFileName, "/bin/sh", []string{
-			fmt.Sprintf("SSHPASS=%s sshpass -e ssh-copy-id %s -o StrictHostKeyChecking=no &> /dev/null", Config.INSTALL.MASTERPASS, host),
+			fmt.Sprintf("SSHPASS=%s sshpass -e ssh-copy-id -i %s %s -o StrictHostKeyChecking=no ", Config.INSTALL.MASTERPASS, pubFile, host),
 		})
 	}
 
