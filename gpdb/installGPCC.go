@@ -12,7 +12,7 @@ func (i *Installation) preGPCCChecks() {
 	Infof("Running the pre checks to install GPCC version \"%s\" on the GPDB Version \"%s\"", cmdOptions.CCVersion, cmdOptions.Version)
 
 	// If this os is ubuntu, currently we dont have any version available to install GPCC on ubuntu
-	if getSystemInfoAndCheckIfItsUbuntu() {
+	if i.OSFamily == "Ubuntu" {
 		Fatalf("Currently install of GPCC via %s tool is not supported", programName)
 	}
 

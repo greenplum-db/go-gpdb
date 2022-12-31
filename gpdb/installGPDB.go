@@ -9,10 +9,15 @@ import (
 	"time"
 )
 
+
 //GPDB v6 CentOS 7 dependencies from Docs
-var dependencies = []string{"apr-util", "bash", "bzip2", "curl", "krb5", "libcurl", "libevent", "libxml2",
+var dependencies_legacy = []string{"apr-util", "bash", "bzip2", "curl", "krb5", "libcurl", "libevent", "libxml2",
 	"libyaml", "zlib", "openldap", "openssh", "openssl", "openssl-libs", "perl", "readline", "rsync", "R",
 	"sed", "tar", "zip", "krb5-devel"}
+
+
+var gpdb_7_beta_dependencies = []string{"libevent", "libyaml", "net-tools", "perl", "rsync", "sos", "tree", 
+	"wget", "which", "zip", "apr", "apr-util", "dstat", "krb5-devel", "libcgroup-tools", "llvm-libs", "python3-devel"}
 
 // Precheck before installing GPDB
 func (i *Installation) preGPDBChecks() {
@@ -22,7 +27,7 @@ func (i *Installation) preGPDBChecks() {
 
 	// Error out if there is multiple installation of GPDB
 	allEnv := ListEnvironmentsInstalled("*")
-	if len(allEnv) > 0 && getSystemInfoAndCheckIfItsUbuntu() {
+	if len(allEnv) > 0 && i.OSFamily == "Ubuntu" {
 		Warnf("Currently having multiple installation of GPDB isn't supported on Ubuntu")
 		Warnf("Please use \"%s remove -v <version>\", to remove the old version " +
 			"or to make room for this installation", programName)
@@ -100,7 +105,7 @@ func (i *Installation) installProduct() {
 	binFile, isItBinaryFile := getBinaryFile(cmdOptions.Version)
 
 	// Is this a binary or rpm file
-	if getSystemInfoAndCheckIfItsUbuntu() {
+	if i.OSFamily == "Ubuntu" {
 		// Located a deb file
 		i.installDebFile(binFile)
 	} else if isItBinaryFile {
@@ -189,19 +194,20 @@ func (i *Installation) preRpmInstallationSetup() {
 	Infof("Removing previous greenplum rpm's from rpm database")
 	cleanupPreviousRpms := Config.CORE.TEMPDIR + "cleanup_previous_rpms.sh"
 	options := []string{
-		"sudo rpm -e --justdb $(rpm -qa | grep green) ",
+		"sudo rpm -e --justdb $(rpm -qa | grep green) | true",
 	}
 	generateBashFileAndExecuteTheBashFile(cleanupPreviousRpms, "/bin/sh", options)
 
 	// Install all dependencies
 	Infof("Installing all the dependencies")
 
-// 	for _, i := range dependencies {
-// 		Debugf("Installing pre rpm installation package: %s", i)
-// 		executeOsCommand("sudo", "yum",  "install", i, "-y", "-q")
-// 	}
-
 	dependenciesOs := []string{"yum", "install", "-y", "-q"}
+	
+	dependencies := dependencies_legacy
+	
+	if int(extractVersion(cmdOptions.Version)) == 7 {
+		dependencies = gpdb_7_beta_dependencies
+	}
 	
 	dependenciesOs = append(dependenciesOs, dependencies...)
 
@@ -225,12 +231,12 @@ func (i *Installation) segmentPreRpmInstallationSetup() {
 		
 	var dependenciesBash []string
 
-// 	for _, d := range dependencies {
-// 		Debugf("Adding pre rpm installation package to segment bash file: %s", d)
-// 		dependenciesBash = append(dependenciesBash, 
-// 			fmt.Sprintf("%s -f %s \"sudo yum install %s -y -q\"", gpsshExecutable, i.SegInstallHostLocation, d))
-// 	}
-// 	
+	dependencies := dependencies_legacy
+	
+	if int(extractVersion(cmdOptions.Version)) == 7 {
+		dependencies = gpdb_7_beta_dependencies
+	}
+
 	Debugf("Adding pre rpm installation package to segment bash file: %s", fmt.Sprintf(strings.Join(dependencies[:], " ")))
 	dependenciesBash = append(dependenciesBash, 
 		fmt.Sprintf("%s -f %s \"sudo yum install %s -y -q\"", gpsshExecutable, i.SegInstallHostLocation, fmt.Sprintf(strings.Join(dependencies[:], " "))))
@@ -397,8 +403,12 @@ func (i *Installation) runSegInstall() {
 
 // Run yum install on all the segment host to install the GPDB software
 func (i *Installation) rpmInstallOnAllSegmentHost() {
-	Infof("Copying rmp file to segment hosts.")
+	Infof("Copying rpm file to segment hosts.")
 	gpscpExecutable := fmt.Sprintf("%s/bin/gpscp", os.Getenv("GPHOME"))
+	//scp deprecated for rsync in 7
+	if int(extractVersion(cmdOptions.Version)) == 7 {
+		gpscpExecutable = fmt.Sprintf("%s/bin/gpsync", os.Getenv("GPHOME"))
+	}
 	destinationFileName := fmt.Sprintf("/tmp/gpdb-%s.rpm", cmdOptions.Version)
 
 	// Copy the rpm to all the segment host
@@ -456,7 +466,38 @@ func buildStandbyHostName(masterHostname string) string {
 
 // Source greenplum path
 func sourceGPDBPath(binLoc string) error {
-	Debugf("Sourcing the greenplum binary location")
+	if strings.HasPrefix(cmdOptions.Version, "7") {
+		return sourceGPDBPath_7(binLoc)
+	}
+	
+	return sourceGPDBPath_legacy(binLoc)
+}
+
+func sourceGPDBPath_7(binLoc string) error {
+	Debugf("Sourcing the greenplum binary location for version 7")
+
+	// Setting up greenplum path
+	err := os.Setenv("GPHOME", binLoc)
+	if err != nil {
+		return err
+	}
+	err = os.Setenv("PYTHONPATH", os.Getenv("GPHOME")+"/lib/python")
+	if err != nil {
+		return err
+	}
+	err = os.Setenv("PATH", os.Getenv("GPHOME")+"/bin:"+os.Getenv("PATH"))
+	if err != nil {
+		return err
+	}
+	err = os.Setenv("LD_LIBRARY_PATH", os.Getenv("GPHOME")+"/lib:"+os.Getenv("LD_LIBRARY_PATH"))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func sourceGPDBPath_legacy(binLoc string) error {
+	Debugf("Sourcing the greenplum binary location for legacy")
 
 	// Setting up greenplum path
 	err := os.Setenv("GPHOME", binLoc)
