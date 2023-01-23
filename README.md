@@ -1,4 +1,4 @@
-# Introduction [![Go Version](https://img.shields.io/badge/go-v1.12.9-green.svg?style=flat-square)](https://golang.org/dl/) [![MIT License](https://img.shields.io/badge/License-MIT-red.svg?style=flat-square)](https://github.com/ielizaga/piv-go-gpdb/blob/master/LICENSE)
+# Introduction [![Go Version](https://img.shields.io/badge/go-v1.19.4-green.svg?style=flat-square)](https://golang.org/dl/) [![MIT License](https://img.shields.io/badge/License-MIT-red.svg?style=flat-square)](https://github.com/ielizaga/piv-go-gpdb/blob/master/LICENSE)
 
 This repo helps in making it ease to setup greenplum database on your local environment. You can provision single node deployment or multi node deployment cluster and test the functionality of the product
 
