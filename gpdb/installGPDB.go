@@ -405,6 +405,7 @@ func (i *Installation) runSegInstall() {
 func (i *Installation) rpmInstallOnAllSegmentHost() {
 	Infof("Copying rpm file to segment hosts.")
 	gpscpExecutable := fmt.Sprintf("%s/bin/gpscp", os.Getenv("GPHOME"))
+	
 	//scp deprecated for rsync in 7
 	if int(extractVersion(cmdOptions.Version)) == 7 {
 		gpscpExecutable = fmt.Sprintf("%s/bin/gpsync", os.Getenv("GPHOME"))
