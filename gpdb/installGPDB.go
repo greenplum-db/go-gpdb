@@ -12,7 +12,7 @@ import (
 //GPDB v6 CentOS 7 dependencies from Docs
 var dependencies = []string{"apr-util", "bash", "bzip2", "curl", "krb5", "libcurl", "libevent", "libxml2",
 	"libyaml", "zlib", "openldap", "openssh", "openssl", "openssl-libs", "perl", "readline", "rsync", "R",
-	"sed", "tar", "zip", "krb5-devel"}
+	"sed", "tar", "zip", "krb5-devel", "libcgroup-tools"}
 
 // Precheck before installing GPDB
 func (i *Installation) preGPDBChecks() {
