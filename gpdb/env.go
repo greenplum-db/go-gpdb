@@ -51,18 +51,31 @@ func (i *Installation) createEnvFile() {
 
 	// Create the file
 	createFile(i.EnvFile)
-	writeFile(i.EnvFile, []string{
-		"export GPHOME=" + i.BinaryInstallationLocation,
-		"export PYTHONPATH=$GPHOME/lib/python",
-		"export PYTHONHOME=$GPHOME/ext/python",
-		"export PATH=$GPHOME/bin:$PYTHONHOME/bin:$PATH",
-		"export LD_LIBRARY_PATH=$GPHOME/lib:$PYTHONHOME/lib:$LD_LIBRARY_PATH",
-		"export OPENSSL_CONF=$GPHOME/etc/openssl.cnf",
-		"export MASTER_DATA_DIRECTORY=" + i.GPInitSystem.MasterDir + "/" + i.GPInitSystem.ArrayName + "-1",
-		"export PGPORT=" + i.GPInitSystem.MasterPort,
-		"export PGDATABASE=" + i.GPInitSystem.DBName,
-		"export singleOrMulti=" + i.SingleORMulti,
-	})
+	if strings.HasPrefix(cmdOptions.Version, "7") {
+		writeFile(i.EnvFile, []string{
+			"export GPHOME=" + i.BinaryInstallationLocation,
+			"export PYTHONPATH=$GPHOME/lib/python",
+			"export PATH=$GPHOME/bin:$PATH",
+			"export LD_LIBRARY_PATH=$GPHOME/lib:$LD_LIBRARY_PATH",
+			"export COORDINATOR_DATA_DIRECTORY=" + i.GPInitSystem.MasterDir + "/" + i.GPInitSystem.ArrayName + "-1",
+			"export PGPORT=" + i.GPInitSystem.MasterPort,
+			"export PGDATABASE=" + i.GPInitSystem.DBName,
+			"export singleOrMulti=" + i.SingleORMulti,
+		})
+	} else {
+		writeFile(i.EnvFile, []string{
+			"export GPHOME=" + i.BinaryInstallationLocation,
+			"export PYTHONPATH=$GPHOME/lib/python",
+			"export PYTHONHOME=$GPHOME/ext/python",
+			"export PATH=$GPHOME/bin:$PYTHONHOME/bin:$PATH",
+			"export LD_LIBRARY_PATH=$GPHOME/lib:$PYTHONHOME/lib:$LD_LIBRARY_PATH",
+			"export OPENSSL_CONF=$GPHOME/etc/openssl.cnf",
+			"export MASTER_DATA_DIRECTORY=" + i.GPInitSystem.MasterDir + "/" + i.GPInitSystem.ArrayName + "-1",
+			"export PGPORT=" + i.GPInitSystem.MasterPort,
+			"export PGDATABASE=" + i.GPInitSystem.DBName,
+			"export singleOrMulti=" + i.SingleORMulti,
+		})
+	}
 }
 
 // Update Environment file

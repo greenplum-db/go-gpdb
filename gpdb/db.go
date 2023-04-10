@@ -30,10 +30,10 @@ func stopAllDb() {
 
 // Cleanup all the gpcc process
 func cleanupGpccProcess() {
-	Infof("Cleaning up gpcc process is found any")
+	Infof("Cleaning up any found gpcc process")
 	cleanupGPCCLoc := Config.CORE.TEMPDIR + "clean_all_gpcc.sh"
 	generateBashFileAndExecuteTheBashFile(cleanupGPCCLoc, "/bin/sh", []string{
-		"ps -ef | egrep \"gpsmon|gpmon|gpmonws|lighttpd\" | grep -v grep | awk '{print $2}' | xargs -n1 /bin/kill -11 >/dev/null 2>&1",
+		"ps -ef | egrep \"gpsmon|gpmon|gpmonws|lighttpd\" | grep -v grep | awk '{print $2}' | xargs -n1 /bin/kill -11 2>&1 || true",
 	})
 }
 

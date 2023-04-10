@@ -30,6 +30,7 @@ var (
 	rx_gpdb_for_6_n_above = `(greenplum-db-(\d+\.)(\d+\.)(\d+)?(\.\d)-rhel5-x86_64.zip|Greenplum Database ` +
 		`(\d+\.)(\d+\.)(\d+)?(\-beta)?(\.\d)?( (Binary Installer|Installer))?( |  )for ` +
 		`((Red Hat Enterprise|RedHat Enterprise|RedHat Entrerprise) Linux|RHEL).*?(7))`
+	rx_gpdb_rhel_8 = `Greenplum Database (\d+\.)(\d+\.)(\d+)?(\-beta)?(\.\d)? Installer for RHEL 8`
 	// Open Source release
 	rx_open_source_gpdb = `greenplum-(db|database)-(\d+\.)(\d+\.)(\d+)?(\-beta)?(\.\d)?-rhel7-x86_64.rpm`
 	// Ubuntu greenplum release
@@ -295,7 +296,7 @@ func AreYourLookingForGPCCForGPDB524AndAbove() bool {
 }
 
 // Get the system information
-func getSystemInfoAndCheckIfItsUbuntu() bool {
+func getSystemInfoAndCheckFamily() string {
 	Debug("Checking the OS flavour ")
 	var si sysinfo.SysInfo
 	var sio SysInformation
@@ -315,19 +316,27 @@ func getSystemInfoAndCheckIfItsUbuntu() bool {
 
 	// GPDB only works with ubuntu 16 and higher
 	var validVersion float64 = 18
-	OsName := strings.Contains(strings.ToLower(sio.Os.Name), "ubuntu")
+	OsnameLower := strings.ToLower(sio.Os.Name)
+	OsName := strings.Contains(OsnameLower, "ubuntu")
+	
 	v := extractVersion(sio.Os.Version)
-	if v < validVersion && OsName {
-		Fatalf("GPDB installation only works with version of ubuntu > %v", validVersion)
-	}
-
-	// Check if its ubuntu release of OS
 	Debugf("The OS flavour of the machine is: %s", sio.Os.Name)
 	if OsName {
-		return true
+	  if v < validVersion {
+	    Fatalf("GPDB installation only works with version of ubuntu > %v", validVersion)
+	  }
+	  return "Ubuntu"
+	}
+	
+	OsName = strings.Contains(OsnameLower, "rocky linux 8")
+	if OsName {
+	  return "RHEL 8"
 	}
 
-	return false
+	// Check if its ubuntu release of OS CentOS Linux 7
+	
+	//Assume RHEL 7 by default
+	return "RHEL 7"
 }
 
 // Extract all the Releases of the product with slug : pivotal-gpdb
@@ -457,6 +466,7 @@ func Download() {
 
 	// Initialize the struct & token
 	r := new(Responses)
+	
 	openSourceReleases := new(GithubReleases)
 	var token string
 
