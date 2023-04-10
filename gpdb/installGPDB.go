@@ -17,7 +17,7 @@ var dependencies_legacy = []string{"apr-util", "bash", "bzip2", "curl", "krb5", 
 
 
 var gpdb_7_beta_dependencies = []string{"libevent", "libyaml", "net-tools", "perl", "rsync", "sos", "tree", 
-	"wget", "which", "zip", "apr", "apr-util", "dstat", "krb5-devel", "libcgroup-tools", "llvm-libs", "python3-devel"}
+	"wget", "which", "zip", "apr", "apr-util", "dstat", "krb5-devel", "libcgroup-tools", "llvm-libs", "python39-devel"}
 
 // Precheck before installing GPDB
 func (i *Installation) preGPDBChecks() {
