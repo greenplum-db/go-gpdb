@@ -114,7 +114,7 @@ func ShowOpenSourceAvailableVersion(g GithubReleases) (string, string, int64) {
 
 	// Regex compile for open source
 	rx, _ := regexp.Compile("(?i)" + rx_open_source_gpdb)
-	if getSystemInfoAndCheckIfItsUbuntu() {
+	if (getSystemInfoAndCheckFamily() == "Ubuntu") {
 		Debug("Changed the regex for finding the ubuntu product in open source")
 		rx, _ = regexp.Compile("(?i)" + rx_gpdb_ubuntu_release_open_source)
 	}
@@ -187,6 +187,7 @@ func (r *Responses) WhichProduct(token string) {
 	// Clearing up the buffer to ensure we are using a clean array and MAP
 	var ProductOutputMap = make(map[string]string)
 	var ProductOptions = []string{}
+	OsFamily := getSystemInfoAndCheckFamily()
 
 	// Crap out if the user choose GPDB version less that 5.24
 	c := extractVersion(r.UserRequest.versionChoosen)
@@ -202,13 +203,17 @@ func (r *Responses) WhichProduct(token string) {
 		}
 	} else {
 		// This is the correct API, all the files are inside the file group MAP
-		isItUbuntu := getSystemInfoAndCheckIfItsUbuntu()
+		
+		isItUbuntu := (OsFamily == "Ubuntu")
 		for _, k := range r.VersionList.File_groups {
 			// GPDB Options
 			if cmdOptions.Product == "gpdb" {
 				var rx *regexp.Regexp
 				if isItUbuntu && !isThisGPDB6xAndAbove() { // if this is ubuntu release and version to download is below GP6
 					Fatalf("Ubuntu greenplum download is only available with GPDB 6.x and above ")
+				} else if OsFamily == "RHEL 8" { // Use version 7
+					rx, _ = regexp.Compile("(?i)" + rx_gpdb_rhel_8)
+
 				} else if isThisGPDB6xAndAbove() { // From version 6 we will use the newer regex
 					rx, _ = regexp.Compile("(?i)" + rx_gpdb_for_6_n_above)
 					if isItUbuntu { // If the os is ubuntu
@@ -220,6 +225,7 @@ func (r *Responses) WhichProduct(token string) {
 				}
 
 				for _, j := range k.Product_files {
+				    Debugf("Product_files entry: %v", j.Name)
 					if rx.MatchString(j.Name) {
 						Debugf("gpdb product list: %v", rx.FindString(j.Name))
 						r.UserRequest.ProductFileURL = j.Links.Self.Href
@@ -269,7 +275,17 @@ func (r *Responses) WhichProduct(token string) {
 	}
 
 	Debugf("Product File URL: %s", r.UserRequest.ProductFileURL)
+	
+	if r.UserRequest.ProductFileURL == ""{
+	    Fatalf("Could not find valid Product File URL for selected version %v + detected OS family '%v'.", cmdOptions.Version, OsFamily)
+	}
+	
 	Debugf("Download File URL: %s", r.UserRequest.DownloadURL)
+	
+	if r.UserRequest.DownloadURL == ""{
+	    Fatalf("Could not find valid Download File URL for selected version + detected OS family '%v'.", OsFamily)
+	}
+	
 
 	// We received the download URL, lets gets the size and file name of the download file.
 	r.ExtractFileNamePlusSize(token)

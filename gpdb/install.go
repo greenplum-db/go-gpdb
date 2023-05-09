@@ -18,6 +18,7 @@ type Installation struct {
 	EnvFile                    string
 	Timestamp                  string
 	SingleORMulti              string
+	OSFamily				   string
 	StandbyHostAvailable       bool
 	GPInitSystem               GPInitSystemConfig
 	GPCC                       GPCCConfig
@@ -62,6 +63,10 @@ func install() {
 
 	// Initialize the struct
 	i := new(Installation)
+	
+	// Check Linux family
+	i.OSFamily = getSystemInfoAndCheckFamily()
+	Debugf("OS Family: %s", i.OSFamily)
 
 	// Checking if this is a single install VM or Mutli node VM
 	var singleORmulti string
@@ -75,7 +80,7 @@ func install() {
 
 	// Currently we will only support single VM installation of ubuntu, if there is a need we can
 	// expand the tool for multi segment on different hosts
-	if i.SingleORMulti == "multi" && getSystemInfoAndCheckIfItsUbuntu() {
+	if i.SingleORMulti == "multi" && i.OSFamily == "Ubuntu" {
 		Fatalf("The installation of GPDB via %s tool, only support single VM at the moment", programName)
 	}
 
