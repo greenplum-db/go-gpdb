@@ -12,7 +12,7 @@ import (
 
 	"github.com/benhoyt/goawk/interp"
 	"github.com/benhoyt/goawk/parser"
-	"github.com/mholt/archiver"
+	"github.com/mholt/archiver/v3"
 	"github.com/ryanuber/columnize"
 )
 
